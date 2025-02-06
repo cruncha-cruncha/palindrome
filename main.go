@@ -1,8 +1,12 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"fmt"
+	"log"
 	"net/http"
+	"os"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -15,5 +19,13 @@ func main() {
 	r.Methods("PUT").Path("/messages/{id}").HandlerFunc(ss.UpdateMessage) // not PATCH
 	r.Methods("DELETE").Path("/messages/{id}").HandlerFunc(ss.DeleteMessage)
 
-	http.ListenAndServe(":8090", r)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8090"
+	}
+
+	log.Printf("Listening on port %s\n", port)
+
+	err := http.ListenAndServe(fmt.Sprintf(":%s", port), r)
+	log.Fatal(err)
 }
