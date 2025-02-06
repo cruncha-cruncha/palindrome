@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
 )
 
 func (ss *SharedState) SaveMessage(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +104,9 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, m := range messages {
-		data.Messages = append(data.Messages, NewGetMessagesResponseItemFromMessage(&m))
+		// sort while we insert
+		insertIndex := binarySearch(data.Messages, func(m *GetAllMessagesResponseItem) int { return m.ID }, m.id)
+		data.Messages = slices.Insert(data.Messages, insertIndex, NewGetMessagesResponseItemFromMessage(&m))
 	}
 
 	w.Header().Set("Content-Type", "application/json")

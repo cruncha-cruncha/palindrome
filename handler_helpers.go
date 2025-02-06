@@ -23,6 +23,25 @@ func ParseIdFromPath(r *http.Request) (int, error) {
 	return id, nil
 }
 
+
+func binarySearch[T any](arr []T, selector func(*T) int, target int) int {
+	left, right := 0, len(arr)-1
+
+	for left <= right {
+		mid := (left + right) / 2
+		midValue := selector(&arr[mid])
+		if midValue == target {
+			return mid
+		} else if midValue < target {
+			left = mid + 1
+		} else {
+			right = mid - 1
+		}
+	}
+
+	return left
+}
+
 // conveniece functions for converting between types
 
 func NewGetMessageResponseDataFromMessage(m *Message) GetMessageResponseData {
