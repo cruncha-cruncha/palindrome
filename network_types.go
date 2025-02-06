@@ -18,7 +18,7 @@ type CreateMessageResponseData struct {
 
 type GetMessageResponseData struct {
 	Text string `json:"text"`
-	IsPalindrome *bool `json:"is_palindrome"`
+	IsPalindrome *bool `json:"is_palindrome"` // trinary, nil if unknown
 }
 
 type GetAllMessagesResponseData struct {
@@ -28,7 +28,7 @@ type GetAllMessagesResponseData struct {
 type GetAllMessagesResponseItem struct {
 	ID int `json:"id"`
 	Text string `json:"text"`
-	IsPalindrome bool `json:"is_palindrome"`
+	IsPalindrome *bool `json:"is_palindrome"` // trinary, nil if unknown
 }
 
 // conveniece functions for converting between types
@@ -45,6 +45,6 @@ func NewGetMessagesResponseItemFromMessage(m *Message) GetAllMessagesResponseIte
 	return GetAllMessagesResponseItem{
 		ID: m.id,
 		Text: m.text,
-		IsPalindrome: *PalindromeStatusToBool(m.isPalindrome),
+		IsPalindrome: PalindromeStatusToBool(m.isPalindrome),
 	}
 }
