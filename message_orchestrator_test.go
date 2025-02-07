@@ -184,6 +184,17 @@ func TestMessageOrchestratorCombined(t *testing.T) {
 	}
 }
 
+func TestMessageOrchestrationAddDuplicateText(t *testing.T) {
+	mo := NewMessageOrchestrator()
+
+	id1, _, _, _ := mo.Add("hello")
+	id2, _, _, _ := mo.Add("hello")
+
+	if id1 == id2 {
+		t.Fatalf(`mo.Add("hello") = %d, want %d`, id2, id1)
+	}
+}
+
 func TestMessageOrchestrationIsPalindrome(t *testing.T) {
 	mo := NewMessageOrchestrator()
 
