@@ -1,8 +1,11 @@
 package main
 
 import (
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -49,16 +52,38 @@ func StringIsPalindrome(s string) int {
 	return P_TRUE
 }
 
-// pretend this function takes a long time to run
-func (p *Palindromes) doWork (msg Message) {
+func (p *Palindromes) doWork(msg Message) {
 	isPalindrome := StringIsPalindrome(msg.text)
-
-	// SleepDelay(1)
-	// check work.cancel periodically
 
 	newStatus := PalindromeWorkStatus{
 		isPalindrome: isPalindrome,
 		done:         true,
+	}
+
+	// pretend this is really slow
+	var delay float64 = 0
+	delay_str := os.Getenv("S_DELAY")
+	if v, err := strconv.Atoi(delay_str); err == nil && v > 0 {
+		delay = float64(v)
+	}
+
+	quarter_delay := delay / 4
+	for i := 0; i < 4; i++ {
+		time.Sleep(time.Duration(quarter_delay) * time.Second)
+
+		p.lock.Lock()
+		work, ok := p.work[msg.hash]
+		p.lock.Unlock()
+
+		if !ok {
+			return
+		} else {
+			select {
+			case <-work.cancel:
+				return
+			default:
+			}
+		}
 	}
 
 	// update work
@@ -75,5 +100,3 @@ func (p *Palindromes) doWork (msg Message) {
 	}
 	p.lock.Unlock()
 }
-
-

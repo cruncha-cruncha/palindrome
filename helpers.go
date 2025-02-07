@@ -4,11 +4,9 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/gorilla/mux"
 )
 
 func CalculateHash(text string) string {
@@ -49,14 +47,4 @@ func BinarySearch[T any](arr []T, selector func(*T) int, target int) int {
 	}
 
 	return left
-}
-
-func SleepDelay(delay int) {
-	// delay_str := os.Getenv("S_DELAY")
-	// delay, err := strconv.Atoi(delay_str)
-	// if err != nil || delay <= 0 {
-	// 	return
-	// }
-
-	time.Sleep(time.Duration(delay) * time.Second)
 }

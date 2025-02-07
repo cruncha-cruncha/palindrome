@@ -31,22 +31,3 @@ type GetAllMessagesResponseItem struct {
 	Text         string `json:"text"`
 	IsPalindrome *bool  `json:"is_palindrome"` // trinary, nil if unknown
 }
-
-// convenience functions for converting between types
-
-func NewMsgResponseData(m *Message) GetMessageResponseData {
-	f := false
-	return GetMessageResponseData{
-		Text:         m.text,
-		IsPalindrome: &f,
-	}
-}
-
-func NewMsgsResponseItem(m *Message) GetAllMessagesResponseItem {
-	f := false
-	return GetAllMessagesResponseItem{
-		ID:           m.id,
-		Text:         m.text,
-		IsPalindrome: &f,
-	}
-}
