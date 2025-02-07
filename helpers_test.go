@@ -127,3 +127,13 @@ func TestBinaryInsertionSortCaseThree(t *testing.T) {
 		t.Fatalf(`sorted[2].id = %d, want 3`, sorted[2].id)
 	}
 }
+
+func TestCalculateHash(t *testing.T) {
+	input := "hello"
+	result := CalculateHash(input)
+	// CoPilot knew this, which is terrifying?
+	expected := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+	if result != expected {
+		t.Fatalf(`CalculateHash(%v) = %v, want %v`, input, result, expected)
+	}
+}
