@@ -105,11 +105,22 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, m := range messages {
 		// sort while we insert
-		insertIndex := binarySearch(data.Messages, func(m *GetAllMessagesResponseItem) int { return m.ID }, m.id)
+		insertIndex := BinarySearch(data.Messages, func(m *GetAllMessagesResponseItem) int { return m.ID }, m.id)
 		data.Messages = slices.Insert(data.Messages, insertIndex, NewGetMessagesResponseItemFromMessage(&m))
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(data)
+}
+
+func (ss *SharedState) DeleteAllMessages(w http.ResponseWriter, r *http.Request) {
+	err := ss.mo.DeleteAll()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

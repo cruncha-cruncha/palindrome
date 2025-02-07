@@ -6,14 +6,6 @@ import (
 	"sync/atomic"
 )
 
-type MessageOrchestration interface {
-	Add(text string) (int, error, chan bool, chan bool)
-	Get(id int) (Message, error)
-	Update(id int, text string) (error, chan bool, chan bool)
-	Delete(id int) error
-	GetAll() ([]Message, error)
-}
-
 type MessageOrchestrator struct {
 	messages sync.Map
 	nextId   atomic.Uint64
@@ -160,4 +152,9 @@ func (mo *MessageOrchestrator) GetAll() ([]Message, error) {
 	})
 
 	return out, nil
+}
+
+func (mo *MessageOrchestrator) DeleteAll() error {
+	mo.messages.Clear()
+	return nil
 }

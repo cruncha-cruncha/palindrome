@@ -1,5 +1,5 @@
-module palindrome
+module github.com/cruncha-cruncha/palindrome
 
-go 1.22.0
+go 1.23.6
 
 require github.com/gorilla/mux v1.8.1

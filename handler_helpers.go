@@ -24,7 +24,7 @@ func ParseIdFromPath(r *http.Request) (int, error) {
 }
 
 
-func binarySearch[T any](arr []T, selector func(*T) int, target int) int {
+func BinarySearch[T any](arr []T, selector func(*T) int, target int) int {
 	left, right := 0, len(arr)-1
 
 	for left <= right {
@@ -42,7 +42,7 @@ func binarySearch[T any](arr []T, selector func(*T) int, target int) int {
 	return left
 }
 
-// conveniece functions for converting between types
+// convenience functions for converting between types
 
 func NewGetMessageResponseDataFromMessage(m *Message) GetMessageResponseData {
 	return GetMessageResponseData{
