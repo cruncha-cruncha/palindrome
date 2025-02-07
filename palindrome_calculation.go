@@ -1,11 +1,8 @@
 package main
 
 import (
-	"os"
 	"regexp"
-	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -14,7 +11,7 @@ const (
 	P_FALSE   = 2
 )
 
-func PalindromeStatusToBoolPointer(status int) *bool {
+func PStatusToBoolPointer(status int) *bool {
 	var out *bool
 
 	if status == P_UNKNOWN {
@@ -30,14 +27,12 @@ func PalindromeStatusToBoolPointer(status int) *bool {
 	return out
 }
 
-// pretend this function takes a long time to run
 func StringIsPalindrome(s string) int {
-	SleepDelay()
-
 	if len(s) == 0 {
 		return P_UNKNOWN
 	}
 
+	// normalize string
 	s = strings.ToLower(s)
 	reg, _ := regexp.Compile(`[^\w\n]+`)
 	s = reg.ReplaceAllString(s, "")
@@ -54,12 +49,31 @@ func StringIsPalindrome(s string) int {
 	return P_TRUE
 }
 
-func SleepDelay() {
-	delay_str := os.Getenv("P_DELAY")
-	delay, err := strconv.Atoi(delay_str)
-	if err != nil || delay <= 0 {
-		return
+// pretend this function takes a long time to run
+func (p *Palindromes) doWork (msg Message) {
+	isPalindrome := StringIsPalindrome(msg.text)
+
+	// SleepDelay(1)
+	// check work.cancel periodically
+
+	newStatus := PalindromeWorkStatus{
+		isPalindrome: isPalindrome,
+		done:         true,
 	}
 
-	time.Sleep(time.Duration(delay) * time.Second)
+	// update work
+	p.lock.Lock()
+	if work, ok := p.work[msg.hash]; ok {
+		work.status = newStatus
+		p.work[msg.hash] = work
+		for _, listener := range work.messages {
+			select {
+			case listener <- newStatus:
+			default:
+			}
+		}
+	}
+	p.lock.Unlock()
 }
+
+
