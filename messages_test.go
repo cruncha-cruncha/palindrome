@@ -1,250 +1,194 @@
 package main
 
-// import (
-// 	"testing"
-// 	"time"
-// )
+import (
+	"testing"
+)
 
-// func TestMessageOrchestratorAdd(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+func TestMessageOrchestratorAdd(t *testing.T) {
+	mo := NewMessages()
 
-// 	id, err := mo.Add("hello")
-// 	if err != nil {
-// 		t.Fatalf(`mo.Add("hello") = %v, want nil`, err)
-// 	}
+	text := "hello"
+	msg, err := mo.Add(text)
+	if err != nil {
+		t.Fatalf(`mo.Add(%v) has err %+v, want nil`, text, err)
+	}
 
-// 	if id != 1 {
-// 		t.Fatalf(`mo.Add("hello") = %d, want 1`, id)
-// 	}
-// }
+	if msg.id != 1 {
+		t.Fatalf(`mo.Add(%v) msg.id = %d, want 1`, text, msg.id)
+	}
+}
 
-// func TestMessageOrchestratorAddMultiple(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+func TestMessageOrchestratorAddMultiple(t *testing.T) {
+	mo := NewMessages()
 
-// 	id, err := mo.Add("hello")
-// 	if err != nil {
-// 		t.Fatalf(`mo.Add("hello") = %v, want nil`, err)
-// 	}
+	text := "hello"
+	msg, err := mo.Add(text)
+	if err != nil {
+		t.Fatalf(`mo.Add(%v) has err %+v, want nil`, text, err)
+	}
 
-// 	if id != 1 {
-// 		t.Fatalf(`mo.Add("hello") = %d, want 1`, id)
-// 	}
+	if msg.id != 1 {
+		t.Fatalf(`mo.Add(%v) = %d, want 1`, text, msg.id)
+	}
 
-// 	id, err = mo.Add("goodbye")
-// 	if err != nil {
-// 		t.Fatalf(`mo.Add("goodbye") = %v, want nil`, err)
-// 	}
+	text = "goodbye"
+	msg, err = mo.Add(text)
+	if err != nil {
+		t.Fatalf(`mo.Add(%v) has err %+v, want nil`, text, err)
+	}
 
-// 	if id != 2 {
-// 		t.Fatalf(`mo.Add("goodbye") = %d, want 2`, id)
-// 	}
-// }
+	if msg.id != 2 {
+		t.Fatalf(`mo.Add("goodbye") msg.id = %d, want 2`, msg.id)
+	}
+}
 
-// func TestMessageOrchestratorGet(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+func TestMessageOrchestratorGet(t *testing.T) {
+	mo := NewMessages()
 
-// 	id, _ := mo.Add("hello")
-// 	message, err := mo.Get(id)
-// 	if err != nil {
-// 		t.Fatalf(`mo.Get(%d) = %v, want nil`, id, err)
-// 	}
+	original, _ := mo.Add("hello")
+	msg, found, err := mo.Get(original.id)
+	if err != nil {
+		t.Fatalf(`mo.Get(%d) has err %+v, want nil`, original.id, err)
+	}
 
-// 	if message.text != "hello" {
-// 		t.Fatalf(`mo.Get(%d).Text = %s, want "hello"`, id, message.text)
-// 	}
-// }
+	if !found {
+		t.Fatalf(`mo.Get(%d) not found`, original.id)
+	}
 
-// func TestMessageOrchestratorGetNone(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+	if msg.text != original.text {
+		t.Fatalf(`mo.Get(%d) msg.text = %s, want %s`, original.id, msg.text, original.text)
+	}
+}
 
-// 	_, err := mo.Get(1)
-// 	if err == nil {
-// 		t.Fatalf(`mo.Get(1) = nil, want non-nil`)
-// 	}
-// }
+func TestMessageOrchestratorGetNone(t *testing.T) {
+	mo := NewMessages()
 
-// func TestMessageOrchestratorUpdate(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+	_, found, err := mo.Get(1)
+	if err != nil {
+		t.Fatalf(`mo.Get(1) has err %+v, want nil`, err)
+	}
+	if found {
+		t.Fatalf(`mo.Get(1) found, want not found`)
+	}
+}
 
-// 	id, _ := mo.Add("hello")
-// 	err := mo.Update(id, "goodbye")
-// 	if err != nil {
-// 		t.Fatalf(`mo.Update(%d, "goodbye") = %v, want nil`, id, err)
-// 	}
+func TestMessageOrchestratorUpdate(t *testing.T) {
+	mo := NewMessages()
 
-// 	message, err := mo.Get(id)
-// 	if err != nil {
-// 		t.Fatalf(`mo.Get(%d) = %v, want nil`, id, err)
-// 	}
+	original, _ := mo.Add("hello")
 
-// 	if message.text != "goodbye" {
-// 		t.Fatalf(`mo.Get(%d).Text = %s, want "goodbye"`, id, message.text)
-// 	}
-// }
+	msg, err := mo.Update(original.id, "goodbye")
+	if err != nil {
+		t.Fatalf(`mo.Update(%d, %v) has err %+v, want nil`, original.id, msg.text, err)
+	}
 
-// func TestMessageOrchestratorUpdateNoLongerPalindrome(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+	if msg.id != original.id {
+		t.Fatalf(`mo.Update(%d, %v) msg.id = %d, want %d`, original.id, msg.text, msg.id, original.id)
+	}
+	if msg.hash == original.hash {
+		t.Fatalf(`mo.Update(%d, %v) msg.hash = %s, want not %s`, original.id, msg.text, msg.hash, original.hash)
+	}
 
-// 	id, _ := mo.Add("racecar")
-// 	err := mo.Update(id, "hello")
-// 	if err != nil {
-// 		t.Fatalf(`mo.Update(%d, "hello") = %v, want nil`, id, err)
-// 	}
+	another, found, err := mo.Get(msg.id)
+	if err != nil {
+		t.Fatalf(`mo.Get(%d) has err %+v, want nil`, msg.id, err)
+	}
+	if !found {
+		t.Fatalf(`mo.Get(%d) not found`, msg.id)
+	}
+	if another.text != msg.text {
+		t.Fatalf(`mo.Get(%d) msg.Text = %s, want %s`, msg.id, another.text, msg.text)
+	}
+}
 
-// 	time.Sleep(50 * time.Millisecond)
-// 	message, err := mo.Get(id)
-// 	if err != nil {
-// 		t.Fatalf(`mo.Get(%d) = %v, want nil`, id, err)
-// 	}
+func TestMessageOrchestratorUpdateNone(t *testing.T) {
+	mo := NewMessages()
 
-// 	if message.isPalindrome != P_FALSE {
-// 		t.Fatalf(`mo.Get(%d).isPalindrome = %d, want %d`, id, message.isPalindrome, P_FALSE)
-// 	}
-// }
+	text := "huh"
+	_, err := mo.Update(1, text)
+	if err == nil {
+		t.Fatalf(`mo.Update(1, %s) has no err, it should`, text)
+	}
+}
 
-// func TestMessageOrchestratorUpdateNone(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+func TestMessageOrchestratorDelete(t *testing.T) {
+	mo := NewMessages()
 
-// 	err := mo.Update(1, "goodbye")
-// 	if err == nil {
-// 		t.Fatalf(`mo.Update(1, "goodbye") = nil, want non-nil`)
-// 	}
-// }
+	msg, _ := mo.Add("hello")
+	err := mo.Delete(msg.id)
+	if err != nil {
+		t.Fatalf(`mo.Delete(%d) has err %+v, want nil`, msg.id, err)
+	}
 
-// func TestMessageOrchestratorDelete(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+	_, found, err := mo.Get(msg.id)
+	if err != nil {
+		t.Fatalf(`mo.Get(%d) has err %+v, want nil`, msg.id, err)
+	}
+	if found {
+		t.Fatalf(`mo.Get(%d) found, want not found`, msg.id)
+	}
+}
 
-// 	id, _ := mo.Add("hello")
-// 	err := mo.Delete(id)
-// 	if err != nil {
-// 		t.Fatalf(`mo.Delete(%d) = %v, want nil`, id, err)
-// 	}
+func TestMessageOrchestratorDeleteNone(t *testing.T) {
+	mo := NewMessages()
 
-// 	_, err = mo.Get(id)
-// 	if err == nil {
-// 		t.Fatalf(`mo.Get(%d) = nil, want non-nil`, id)
-// 	}
-// }
+	err := mo.Delete(1)
+	if err != nil {
+		t.Fatalf(`mo.Delete(1) has err %+v, want nil`, err)
+	}
+}
 
-// func TestMessageOrchestratorDeleteNone(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+func TestMessageOrchestratorGetAll(t *testing.T) {
+	mo := NewMessages()
 
-// 	err := mo.Delete(1)
-// 	if err == nil {
-// 		t.Fatalf(`mo.Delete(1) = nil, want non-nil`)
-// 	}
-// }
+	msg1, _ := mo.Add("hello")
+	msg2, _ := mo.Add("goodbye")
+	messages, err := mo.GetAll()
+	if err != nil {
+		t.Fatalf(`mo.GetAll() has err %+v, want nil`, err)
+	}
 
-// func TestMessageOrchestratorGetAll(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+	if len(messages) != 2 {
+		t.Fatalf(`len(mo.GetAll()) = %d, want 2`, len(messages))
+	}
 
-// 	id1, _ := mo.Add("hello")
-// 	id2, _ := mo.Add("goodbye")
-// 	messages, err := mo.GetAll()
-// 	if err != nil {
-// 		t.Fatalf(`mo.GetAll() = %v, want nil`, err)
-// 	}
+	if messages[0].id != msg1.id {
+		t.Fatalf(`mo.GetAll()[0].id = %d, want %d`, messages[0].id, msg1.id)
+	}
 
-// 	if len(messages) != 2 {
-// 		t.Fatalf(`len(mo.GetAll()) = %d, want 2`, len(messages))
-// 	}
+	if messages[0].text != msg1.text {
+		t.Fatalf(`mo.GetAll()[0].text = %s, want %s`, messages[0].text, msg1.text)
+	}
 
-// 	if messages[0].id != id1 {
-// 		t.Fatalf(`mo.GetAll()[0].id = %d, want %d`, messages[0].id, id1)
-// 	}
+	if messages[1].id != msg2.id {
+		t.Fatalf(`mo.GetAll()[1].id = %d, want %d`, messages[1].id, msg2.id)
+	}
 
-// 	if messages[0].text != "hello" {
-// 		t.Fatalf(`mo.GetAll()[0].text = %s, want "hello"`, messages[0].text)
-// 	}
+	if messages[1].text != msg2.text {
+		t.Fatalf(`mo.GetAll()[1].text = %s, want %s`, messages[1].text, msg2.text)
+	}
+}
 
-// 	if messages[1].id != id2 {
-// 		t.Fatalf(`mo.GetAll()[1].id = %d, want %d`, messages[1].id, id2)
-// 	}
+func TestMessageOrchestratorGetAllNone(t *testing.T) {
+	mo := NewMessages()
 
-// 	if messages[1].text != "goodbye" {
-// 		t.Fatalf(`mo.GetAll()[1].text = %s, want "goodbye"`, messages[1].text)
-// 	}
-// }
+	messages, err := mo.GetAll()
+	if err != nil {
+		t.Fatalf(`mo.GetAll() = %v, want nil`, err)
+	}
 
-// func TestMessageOrchestratorGetAllNone(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
+	if len(messages) != 0 {
+		t.Fatalf(`len(mo.GetAll()) = %d, want 0`, len(messages))
+	}
+}
 
-// 	messages, err := mo.GetAll()
-// 	if err != nil {
-// 		t.Fatalf(`mo.GetAll() = %v, want nil`, err)
-// 	}
+func TestMessageOrchestrationAddDuplicateText(t *testing.T) {
+	mo := NewMessages()
 
-// 	if len(messages) != 0 {
-// 		t.Fatalf(`len(mo.GetAll()) = %d, want 0`, len(messages))
-// 	}
-// }
+	msg1, _ := mo.Add("hello")
+	msg2, _ := mo.Add("hello")
 
-// func TestMessageOrchestratorCombined(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
-
-// 	id1, _ := mo.Add("hello")
-// 	id2, _ := mo.Add("goodbye")
-// 	err := mo.Delete(id1)
-// 	messages, err := mo.GetAll()
-
-// 	if err != nil {
-// 		t.Fatalf(`mo.GetAll() = %v, want nil`, err)
-// 	}
-
-// 	if len(messages) != 1 {
-// 		t.Fatalf(`len(mo.GetAll()) = %d, want 1`, len(messages))
-// 	}
-
-// 	if messages[0].id != id2 {
-// 		t.Fatalf(`mo.GetAll()[0].id = %d, want %d`, messages[0].id, id2)
-// 	}
-
-// 	if messages[0].text != "goodbye" {
-// 		t.Fatalf(`mo.GetAll()[0].text = %s, want "goodbye"`, messages[0].text)
-// 	}
-// }
-
-// func TestMessageOrchestrationAddDuplicateText(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
-
-// 	id1, _ := mo.Add("hello")
-// 	id2, _ := mo.Add("hello")
-
-// 	if id1 == id2 {
-// 		t.Fatalf(`mo.Add("hello") = %d, want %d`, id2, id1)
-// 	}
-// }
-
-// func TestMessageOrchestrationIsPalindrome(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
-
-// 	id, _, _, _ := mo.Add("racecar")
-
-// 	time.Sleep(50 * time.Millisecond)
-// 	message, err := mo.Get(id)
-
-// 	if err != nil {
-// 		t.Fatalf(`mo.Get(%d) = %v, want nil`, id, err)
-// 	}
-
-// 	if message.isPalindrome != P_TRUE {
-// 		t.Fatalf(`mo.Get(%d).isPalindrome = %d, want %d`, id, message.isPalindrome, P_TRUE)
-// 	}
-// }
-
-// func TestMessageOrchestrationIsNotPalindrome(t *testing.T) {
-// 	mo := NewMessageOrchestrator()
-
-// 	id, _ := mo.Add("hello")
-
-// 	time.Sleep(50 * time.Millisecond)
-// 	message, err := mo.Get(id)
-
-// 	if err != nil {
-// 		t.Fatalf(`mo.Get(%d) = %v, want nil`, id, err)
-// 	}
-
-// 	if message.isPalindrome != P_FALSE {
-// 		t.Fatalf(`mo.Get(%d).isPalindrome = %d, want %d`, id, message.isPalindrome, P_FALSE)
-// 	}
-// }
+	if msg1.id == msg2.id {
+		t.Fatalf(`mo.Add("hello") = %d, want %d`, msg1.id, msg2.id)
+	}
+}
