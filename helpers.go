@@ -48,3 +48,10 @@ func BinarySearch[T any](arr []T, selector func(*T) int, target int) int {
 
 	return left
 }
+
+func PWorkKeyFromMsg(msg Message) PalindromeWorkKey {
+	return PalindromeWorkKey{
+		hash:      msg.hash,
+		messageId: msg.id,
+	}
+}
