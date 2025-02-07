@@ -23,8 +23,8 @@ func TestStringIsPalindromeCaseThree(t *testing.T) {
 }
 
 func TestStringIsPalindromeCaseFour(t *testing.T) {
-	if StringIsPalindrome("A man, a plan, a canal, panama!") != P_FALSE {
-		t.Fatalf(`StringIsPalindrome("hello") = %d, want %d`, StringIsPalindrome("hello"), P_FALSE)
+	if StringIsPalindrome("A man, a plan, a canal, panama!") != P_TRUE {
+		t.Fatalf(`StringIsPalindrome("A man, a plan, a canal, panama!") = %d, want %d`, StringIsPalindrome("A man, a plan, a canal, panama!"), P_TRUE)
 	}
 }
 

@@ -40,7 +40,7 @@ func StringIsPalindrome(s string) int {
 
 	s = strings.ToLower(s)
 	reg, _ := regexp.Compile(`[^\w\n]+`)
-	reg.ReplaceAllString(s, "")
+	s = reg.ReplaceAllString(s, "")
 
 	length := len(s)
 
