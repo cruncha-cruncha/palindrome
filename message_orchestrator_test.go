@@ -82,6 +82,26 @@ func TestMessageOrchestratorUpdate(t *testing.T) {
 	}
 }
 
+func TestMessageOrchestratorUpdateNoLongerPalindrome(t *testing.T) {
+	mo := NewMessageOrchestrator()
+
+	id, _, _, _ := mo.Add("racecar")
+	err, _, _ := mo.Update(id, "hello")
+	if err != nil {
+		t.Fatalf(`mo.Update(%d, "hello") = %v, want nil`, id, err)
+	}
+
+	time.Sleep(50 * time.Millisecond)
+	message, err := mo.Get(id)
+	if err != nil {
+		t.Fatalf(`mo.Get(%d) = %v, want nil`, id, err)
+	}
+
+	if message.isPalindrome != P_FALSE {
+		t.Fatalf(`mo.Get(%d).isPalindrome = %d, want %d`, id, message.isPalindrome, P_FALSE)
+	}
+}
+
 func TestMessageOrchestratorUpdateNone(t *testing.T) {
 	mo := NewMessageOrchestrator()
 
