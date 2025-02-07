@@ -105,7 +105,7 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, m := range messages {
 		// sort while we insert
-		insertIndex := binarySearch(data.Messages, func(m *GetAllMessagesResponseItem) int { return m.ID }, m.id)
+		insertIndex := BinarySearch(data.Messages, func(m *GetAllMessagesResponseItem) int { return m.ID }, m.id)
 		data.Messages = slices.Insert(data.Messages, insertIndex, NewGetMessagesResponseItemFromMessage(&m))
 	}
 

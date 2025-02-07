@@ -2,6 +2,8 @@
 
 This is a small REST API. Defualt port is 8090.
 
+`go test -v`
+
 `go run .` or `P_DELAY=10 PORT=3000 go run .`
 
 Or
