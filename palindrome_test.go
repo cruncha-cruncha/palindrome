@@ -22,6 +22,12 @@ func TestStringIsPalindromeCaseThree(t *testing.T) {
 	}
 }
 
+func TestStringIsPalindromeCaseFour(t *testing.T) {
+	if StringIsPalindrome("A man, a plan, a canal, panama!") != P_FALSE {
+		t.Fatalf(`StringIsPalindrome("hello") = %d, want %d`, StringIsPalindrome("hello"), P_FALSE)
+	}
+}
+
 func TestPalindromeStatusToBoolPointerCaseOne(t *testing.T) {
 	result := PalindromeStatusToBoolPointer(P_TRUE)
 	if result == nil {
