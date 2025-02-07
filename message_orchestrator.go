@@ -6,8 +6,6 @@ import (
 	"sync/atomic"
 )
 
-
-
 type MessageOrchestrator struct {
 	messages sync.Map
 	nextId   atomic.Uint64
@@ -154,4 +152,9 @@ func (mo *MessageOrchestrator) GetAll() ([]Message, error) {
 	})
 
 	return out, nil
+}
+
+func (mo *MessageOrchestrator) DeleteAll() error {
+	mo.messages.Clear()
+	return nil
 }

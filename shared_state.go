@@ -11,6 +11,7 @@ type MessageOrchestration interface {
 	Update(id int, text string) (error, chan bool, chan bool)
 	Delete(id int) error
 	GetAll() ([]Message, error)
+	DeleteAll() error
 }
 
 func NewSharedState() SharedState {

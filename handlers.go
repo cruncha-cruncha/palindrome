@@ -113,3 +113,14 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(data)
 }
+
+func (ss *SharedState) DeleteAllMessages(w http.ResponseWriter, r *http.Request) {
+	err := ss.mo.DeleteAll()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
