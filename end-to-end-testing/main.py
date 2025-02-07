@@ -5,6 +5,9 @@ def go():
     log = logger()
     local_data = {}
     
+    status, data, hint = get_all_messages(BASE_URL, 200, {})
+    log(hint)
+    
     for p in palindromes:
         status, data, hint = add_message(BASE_URL, p, 201)
         local_data[data["id"]] = { "id": data["id"], "text": p, "is_palindrome": True }
@@ -45,6 +48,12 @@ def go():
     log(hint)
 
     status, data, hint = update_message(BASE_URL, some_non_palindrome["id"], "abc", 404)
+    log(hint)
+
+    status, data, hint = get_message(BASE_URL, some_palindrome["id"], 404, "", None)
+    log(hint)
+
+    status, data, hint = get_message(BASE_URL, some_non_palindrome["id"], 404, "", None)
     log(hint)
 
     some_palindrome = [v for v in local_data.values() if v["is_palindrome"]][0]

@@ -1,4 +1,4 @@
-module palindrome
+module github.com/cruncha-cruncha/palindrome
 
 go 1.23.6
 
