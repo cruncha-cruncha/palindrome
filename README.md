@@ -87,7 +87,33 @@ main, handler, messages, palindromes, palindrome_calculation, helpers, shared_st
 - handlers all follow a pattern of: get payload data / url variables, call orchestrators, then return
 - generally update messages before updating palindrome work, but the code will still handle cases where a message exists but it's work does not
 - all request and response payloads have their own type
+- handlers do a lot of work. That work could be encapsulated into other functions or even another orchestrator (to make sure Messages and Palindromes stay in sync). This approach was not taken due to time constraints.
 
 ## Diagrams
 
+![Data Flow](./diagrams/DataFlow.drawio.png)
+
+This is the general data flow through the server. All requests come in and hit ListenAndServe. gorilla/mux routes the request to a handler (the middle column of rectangles). Each handler gets their own goroutine. All handlers have access to SharedState, through which they can access Messages and Palindromes. Calling the Palindromes.Add method may spawn a new doWork goroutine. 
+
+I don't know exactly when / how many goroutines / threads are spawned / used by net/http (especially how responses are returned).
+
 ![UpdateMessage sequence diagram](./diagrams/UpdateMessage_Sequence.drawio.png)
+
+The above diagram shows how the UpdateMessage handler interacts with Messages (a MessageOrchestrator) and Palindromes (a WorkOrchestrator). `msg_1` and `msg_2` are different variables but have the same message id. `msg_1` is the original, `msg_2` has updated text and hash.
+
+Inbetween the `update (id, text)` call to Messages and the `add (msg_2)` call to Palindromes, a message exists without any corresponding palindrome work. This is handled by the code by returning a status of P_UNKNOWN, aka it is unknown if the message text is a palindrome or not. On the client side, is_palindrome will be null. This race condition exists even when `S_DELAY=0`. It could be eliminated by splitting the MessageOrchestrator 'add' into two functions: one to create a message and another to save it. The flow would then be:
+
+1. check if the message exists (`get (id)`)
+2. create a new message, using the new `create (id, text)`.
+3. add palindrome work (`add (msg_2)`)
+4. insert the new message, using the new `insert (msg_2)` function
+5. remove old palindrome work (`remove (msg_1 key)`)
+
+On insert, Messages would have to verify that the id of the message to be inserted does not already exist. I think this is an overall better approach in that it's more flexible and prevents the race condition, but it puts more work whatever code is calling Messages. 
+
+TODO: put in UML diagram here with MessageOrchestrator, Messages, WorkOrchestrator, and Palindromes
+
+If Messages and Palindromes were to be persistent and store data to a database, I see two possible approaches:
+
+1. Pass a db pool/connection into the constructor. This approach is simple, and requires little modification to existing code. However the db connection could not be modified after instantiation, and I'm not sure how transactions across multiple methods could be implemented.
+2. Modify the interface so all methods require a db pool/connection/tx. This approach requires modifying a lot of existing code and puts more work on the calling code (has to manage the db connection). It is more flexible, keeps the db connection in shared state, and could support transactions across methods. I would prefer this approach.
