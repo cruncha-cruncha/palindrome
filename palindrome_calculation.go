@@ -8,12 +8,16 @@ import (
 	"time"
 )
 
+// P_UNKNOWN is used for both an empty string, and while calculating if a string
+// is a palindrome. P_TRUE and P_FALSE are self-explanatory.
 const (
 	P_UNKNOWN = 0
 	P_TRUE    = 1
 	P_FALSE   = 2
 )
 
+// PStatusToBoolPointer converts P_UNKNOWN to nil, P_TRUE to true, and P_FALSE
+// to false.
 func PStatusToBoolPointer(status int) *bool {
 	var out *bool
 
@@ -30,6 +34,9 @@ func PStatusToBoolPointer(status int) *bool {
 	return out
 }
 
+// StringIsPalindrome returns P_UNKNOWN if the string is empty, P_TRUE if it is
+// a palindrome, and P_FALSE if it is not. It's case-insensitive and only
+// considers alphanumeric characters (whitespace and punctuation are ignored).
 func StringIsPalindrome(s string) int {
 	if len(s) == 0 {
 		return P_UNKNOWN
@@ -52,6 +59,14 @@ func StringIsPalindrome(s string) int {
 	return P_TRUE
 }
 
+// doWork is a Palindromes method that calculates if a message is a palindrome.
+// Once completed, it saves the result and updates all listeners. It's safe to
+// to run concurrently.
+// 
+// doWork can be artificially slowed down, and will take as long as S_DELAY
+// seconds (default 0) to complete. It's also cancellable, and checks 4 times
+// during S_DELAY to see if it should stop early. If stopped early, it leaves
+// Palindromes as-is and does not send any updates to listeners.
 func (p *Palindromes) doWork(msg Message) {
 	isPalindrome := StringIsPalindrome(msg.text)
 
@@ -67,21 +82,23 @@ func (p *Palindromes) doWork(msg Message) {
 		delay = float64(v)
 	}
 
-	quarter_delay := delay / 4
-	for i := 0; i < 4; i++ {
-		time.Sleep(time.Duration(quarter_delay) * time.Second)
+	if delay > 0 {
+		quarter_delay := delay / 4
+		for i := 0; i < 4; i++ {
+			time.Sleep(time.Duration(quarter_delay) * time.Second)
 
-		p.lock.Lock()
-		work, ok := p.work[msg.hash]
-		p.lock.Unlock()
+			p.lock.Lock()
+			work, ok := p.work[msg.hash]
+			p.lock.Unlock()
 
-		if !ok {
-			return
-		} else {
-			select {
-			case <-work.cancel:
+			if !ok {
 				return
-			default:
+			} else {
+				select {
+				case <-work.cancel:
+					return
+				default:
+				}
 			}
 		}
 	}
@@ -91,7 +108,7 @@ func (p *Palindromes) doWork(msg Message) {
 	if work, ok := p.work[msg.hash]; ok {
 		work.status = newStatus
 		p.work[msg.hash] = work
-		for _, listener := range work.messages {
+		for _, listener := range work.listeners {
 			select {
 			case listener <- newStatus:
 			default:
