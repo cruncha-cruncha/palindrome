@@ -22,11 +22,64 @@ I decided not to make the data persistent. This eases set up (so other people ca
 - PUT /messages/{id}
 - DELETE /messages/{id}
 
+Aside: the brief says "Provide some REST API documentation (either in Readme or in-line code)", so I should make sure this is very visible.
+
 I like using plurals (messages not message) as it's more flexible. I used a PUT instead of a PATCH, as we're effectively replacing the entire data. I think these endpoints are fairly self-descriptive. The DELETE /messages was not required by the brief, but helped with testing.
 
 ### Request / Response
 
-Their types. Note that although isPalindrome is used internally, is_palindrome is returned to the user (all JSON uses snake_case).
+Their types. Note that although isPalindrome is used internally, is_palindrome is returned to the user (all JSON uses snake_case). See `network_types.go` (TODO: link directly?) for exact definitions.
+
+All request/response payloads are JSON.
+
+Request payloads
+```js
+// POST /messages request payload
+{
+    "text": "some string, which will be check if it's a palindrome"
+}
+
+// PUT /messages/{id} request payload
+{
+    "id": 1234 // some integer
+    "text": "this text will completely replace the previous text of the message with id 1234"
+}
+
+// all other endpoints do not require a payload
+```
+
+Response payloads
+```js
+// POST /messages response payload
+{
+    "id": 1 // an integer, greater than zero. guaranteed to be unique
+}
+
+// GET /messages response payload
+{
+    // this array is sorted in ascending order by message id. Can be empty.
+    "messages": [{
+        "id": 1
+        "text": "some text"
+        "is_palindrome": false // null / true / false
+    }]
+}
+
+// DELETE /messages does not have a response payload
+
+// GET /message/{id} response payload
+{
+    "text": "the text"
+    "is_palindrome": true // can be true / false / null
+}
+
+// PUT /messages/{id} does not have a response payload
+
+// DELETE /messages/{id} does not have a response payload. It returns 204, 404, or 500
+
+```
+
+Could have used the same response type for all messages (id, text, is_palindrome). Decided not to to de-duplicate data (keep it as minimal as possible). This is probably not the right decision; it doesn't make a lot of sense for GetMessage and GetMessages to return slightly different message data.
 
 ## Setup
 
@@ -66,7 +119,7 @@ docker run -p 3000:8090 liam/palindrome-demo
 
 ## What Actually Happened
 
-I thought to myself "this is too simple, how could I make it more challenging?".
+I thought to myself "this is too simple, how could I make it more challenging?". If I'm going to make people wait 4 days for this, it better be impressive.
 
 What if calculating whether or not some text was a palindrome took a long time? As if the REST API was more like an RPC server for long-running tasks.
 
@@ -78,10 +131,17 @@ There are several consequences to this decision:
 
 I wanted the long-running tasks to be somewhat efficient. So if two messages come in with the same text, only one calculation is required. If a message is created then immediately deleted, cancel the work being done in the background.
 
-## Files
+## Files / Architecture
 
-main, handler, messages, palindromes, palindrome_calculation, helpers, shared_state
+- main: registered handlers to routes, starts the server
+- handlers: defines all the handlers
+- messages: defines Messages, which implements MessageOrchestrator
+- palindromes: defines Palindromes, which implements WorkOrchestrator
+- palindrome_calculation: functions for determining if a string is a palindrome, as well as Palindromes.doWork which can be artifically slowed down (via S_DELAY)
+- helpers: small, self-contained functions which could be useful in several places and don't belong anywhere else. 
+- shared_state: defines SharedState (which all handlers have access too), and provides the actual definition for some important interfaces and structs. I think it would be more typical to define the Message struct (for instance) in the messages.go file, but I chose to define it in here so one could get a quick overview of how it all comes together, instead of having to look in different files. See UML diagram for more details.
 
+I'm not sure where 'orchestrator' came from, and MessageOrchestrator shares nothing in common (in terms of inheritance / composition / implementation) with WorkOrchestrator. I just like that word.
 
 ## Architecture
 
@@ -153,7 +213,7 @@ What are the unknowns for the code? What questions do I have? Do I need to reach
 
 Right off the bat I knew I wanted end-to-end tests, but didn't know exactly how. I'd also never done unit testing in production go code but knew it was possible. After reading some documentation on go test, quickly integrated a bunch of those.
 
-Earlier, branching strategy? Could just commit everything to main. Decided to use some sort of 'feature branch' strategy, which was more like a what-part-of-the-project-i'm-on strategy. So there ended up being five branches (as of right now): main, comments, scratch, separate-palindromes, and tests.
+Earlier, branching strategy? Git commit message format? It was a given from the start that I would use Github; it's what I'm familiar with but also was requested in the brief. Could just commit everything to main. Decided to use some sort of 'feature branch' strategy, which was more like a what-part-of-the-project-i'm-on strategy. So there ended up being five branches (as of right now): main, comments, scratch, separate-palindromes, and tests.
 
 - scratch was for figuring out all the packages, getting things running, getting an initial version out (all the way up to step 5)
 - tests came along afterwards, and was for step 6 and 7
@@ -180,6 +240,6 @@ Came up with a basic architecture diagram, not following any sort of specific te
 
 Decided a UML diagram would be helpful for the Messages and Palindromes structs, and their associates. Three different diagrams, all helpful I think. 
 
-Now I'm finishing the README. Will go through several edits, clean up my verbiage, re-organize (while practicing a presentation). Will definitely keep tweaking it.
+Now I'm finishing the README. Will go through several edits, clean up my verbiage, re-organize (while practicing a presentation). Will definitely keep tweaking it. And will go back and read the brief again to figure out what I missed.
 
 But back to my overall approach. Questions: how can I accomplish this task simply? What questions do I have? How long will that take? How can I accomplish this task better?
