@@ -2,12 +2,12 @@
 
 This directory contains some python scripts for testing sequential calls to the REST API. The `queries.py` file defines six functions, corresponding to the server's endpoints. Each function makes a request and verifies the result, then returns the status code, response payload (JSON), and a 'hint' (a string describing what happened).
 
-1. add_message(base_url, text, expect_status): POST /messages, expects 201, and an integer 'id' in the response payload
-2. get_message(base_url, id, expect_status, expect_text, expect_is_palindrome): GET /messages/{id}, expects 200, string 'text', boolean (but can be None) 'is_palindrome'
-3. update_message(base_url, id, text, expect_status): PUT /messages/{id}, expects 200, no data
-4. delete_message(base_url, id, expect_status): DELETE /messages/{id}, expects 204, no data
-5. get_all_messages(base_url, expect_status, expect_messages): GET /messages, expects 200, 'messages' array, with each item having 'id', 'text', and 'is_palindrome'
-6. delete_all_messages(base_url, expect_status): DELETE /messages, expects 204, no data
+- add_message(base_url, text, expect_status): POST /messages, expects 201, and an integer 'id' in the response payload
+- get_message(base_url, id, expect_status, expect_text, expect_is_palindrome): GET /messages/{id}, expects 200, string 'text', boolean (but can be None) 'is_palindrome'
+- update_message(base_url, id, text, expect_status): PUT /messages/{id}, expects 200, no data
+- delete_message(base_url, id, expect_status): DELETE /messages/{id}, expects 204, no data
+- get_all_messages(base_url, expect_status, expect_messages): GET /messages, expects 200, 'messages' array, with each item having 'id', 'text', and 'is_palindrome'
+- delete_all_messages(base_url, expect_status): DELETE /messages, expects 204, no data
 
 If the expect_status is different from what is normally considered successful, then the response payload is neither parsed nor validated. For example, attempting to get a message which doesn't exist should correctly return 404 with no payload.
 
