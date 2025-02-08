@@ -71,15 +71,21 @@ func (ss *SharedState) GetMessage(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if !found {
-		// This should never happen: handlers are set up to modify messages
-		// first, work second, so every message should have a corresponding work
-		// item. Still, there an unlucky race condition or a bug. In either
-		// case, there's no harm in inserting more work.
-		log.Printf("No palindrome work found for message %d\n", msg.id)
-		// If we don't have a result, we don't know if it's a palindrome.
-		result = PalindromeWorkStatus{isPalindrome: P_UNKNOWN}
+		// This can happen on Add or Update: adding new work requires a message
+		// id, which doesn't exist until the message is created, so it's 
+		// possible for a message to exist with no corresponding palindrome work
+		// (for a brief moment in time).
+		// 
+		// It shouldn't happen on Delete or DeleteAll: messages are deleted
+		// before their work. But it's also a possible bug. In any case, there's
+		// no harm in inserting more work (duplicate work is handled / ignored).
+
 		// Kick off more work, so next time we'll have a result.
 		ss.po.Add(msg)
+
+		// Can safely return P_UNKNOWN, even though it could be annoying for the
+		// user.
+		result = PalindromeWorkStatus{isPalindrome: P_UNKNOWN}
 	}
 
 	// respond with the message text and palindrome status
@@ -223,7 +229,6 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 		} else if !found {
 			// This should never happen, but we can handle it. See GetMessage
 			// for more details.
-			log.Printf("No palindrome work found for message %d\n", m.id)
 			result = PalindromeWorkStatus{isPalindrome: P_UNKNOWN}
 			ss.po.Add(m)
 		}
