@@ -83,9 +83,9 @@ func (p *Palindromes) doWork(msg Message) {
 	}
 
 	if delay > 0 {
-		quarter_delay := delay / 4
+		ms_delay := delay / 4 * 1000
 		for i := 0; i < 4; i++ {
-			time.Sleep(time.Duration(quarter_delay) * time.Second)
+			time.Sleep(time.Duration(ms_delay) * time.Millisecond)
 
 			p.lock.Lock()
 			work, ok := p.work[msg.hash]
