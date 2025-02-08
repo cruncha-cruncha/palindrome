@@ -10,6 +10,7 @@ import (
 // SaveMessage expects a JSON payload with a "text" field and returns 200 with
 // a JSON response, which has an "id" field (a positive integer).
 func (ss *SharedState) SaveMessage(w http.ResponseWriter, r *http.Request) {
+	// verify payload (need some text)
 	decoder := json.NewDecoder(r.Body)
 	var payload CreateMessageRequestData
 	if err := decoder.Decode(&payload); err != nil {
@@ -18,6 +19,7 @@ func (ss *SharedState) SaveMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create the message
 	msg, err := ss.mo.Add(payload.Text)
 	if err != nil {
 		log.Println(err)
@@ -25,6 +27,7 @@ func (ss *SharedState) SaveMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// kick off the palindrome work
 	_, _, _, err = ss.po.Add(msg)
 	if err != nil {
 		log.Println(err)
@@ -32,6 +35,7 @@ func (ss *SharedState) SaveMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// respond with message id
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(CreateMessageResponseData{ID: msg.id})
@@ -41,12 +45,14 @@ func (ss *SharedState) SaveMessage(w http.ResponseWriter, r *http.Request) {
 // fields: "text" and "is_palindrome". The "is_palindrome" field is a boolean
 // but can be null. It will return 404 if the message is not found.
 func (ss *SharedState) GetMessage(w http.ResponseWriter, r *http.Request) {
+	// get the message id we're looking for
 	id, err := ParseIdFromPath(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	// get the message, return 404 if not found
 	msg, found, err := ss.mo.Get(id)
 	if err != nil {
 		log.Println(err)
@@ -57,6 +63,7 @@ func (ss *SharedState) GetMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get the palindrome work result corresponding to the message
 	workKey := PWorkKeyFromMsg(msg)
 	found, result, _, err := ss.po.Poll(workKey)
 	if err != nil {
@@ -64,10 +71,18 @@ func (ss *SharedState) GetMessage(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if !found {
-		w.WriteHeader(http.StatusNotFound)
-		return
+		// This should never happen: handlers are set up to modify messages
+		// first, work second, so every message should have a corresponding work
+		// item. Still, there an unlucky race condition or a bug. In either
+		// case, there's no harm in inserting more work.
+		log.Printf("No palindrome work found for message %d\n", msg.id)
+		// If we don't have a result, we don't know if it's a palindrome.
+		result = PalindromeWorkStatus{isPalindrome: P_UNKNOWN}
+		// Kick off more work, so next time we'll have a result.
+		ss.po.Add(msg)
 	}
 
+	// respond with the message text and palindrome status
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(GetMessageResponseData{
@@ -80,12 +95,14 @@ func (ss *SharedState) GetMessage(w http.ResponseWriter, r *http.Request) {
 // "text" field. It will return 404 if the message to be updated is not found,
 // otherwise it will return 200, no body.
 func (ss *SharedState) UpdateMessage(w http.ResponseWriter, r *http.Request) {
+	// get the message id we want to update
 	id, err := ParseIdFromPath(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	// verify payload (need some text)
 	decoder := json.NewDecoder(r.Body)
 	var payload UpdateMessageRequestData
 	if err := decoder.Decode(&payload); err != nil {
@@ -93,6 +110,7 @@ func (ss *SharedState) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// verify that we're updating an existing message
 	oldMsg, found, err := ss.mo.Get(id)
 	if err != nil {
 		log.Println(err)
@@ -103,6 +121,7 @@ func (ss *SharedState) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// update the message
 	newMsg, err := ss.mo.Update(id, payload.Text)
 	if err != nil {
 		log.Println(err)
@@ -110,6 +129,7 @@ func (ss *SharedState) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// kick off palindrome work for the new message
 	_, _, _, err = ss.po.Add(newMsg)
 	if err != nil {
 		log.Println(err)
@@ -117,6 +137,7 @@ func (ss *SharedState) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// cancel palindrome work for the old message
 	oldWorkKey := PWorkKeyFromMsg(oldMsg)
 	err = ss.po.Remove(oldWorkKey)
 	if err != nil {
@@ -125,18 +146,21 @@ func (ss *SharedState) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// respond
 	w.WriteHeader(http.StatusOK)
 }
 
 // DeleteMessage expects an ID in the path. It will return 404 if the message
 // to be deleted doesn't exist, otherwise it will return 204, no body.
 func (ss *SharedState) DeleteMessage(w http.ResponseWriter, r *http.Request) {
+	// get the message id we want to delete
 	id, err := ParseIdFromPath(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	// verify that the message exists
 	msg, found, err := ss.mo.Get(id)
 	if err != nil {
 		log.Println(err)
@@ -147,6 +171,7 @@ func (ss *SharedState) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// delete the message
 	err = ss.mo.Delete(id)
 	if err != nil {
 		log.Println(err)
@@ -154,6 +179,7 @@ func (ss *SharedState) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// cancel the corresponding palindrome work
 	workKey := PWorkKeyFromMsg(msg)
 	err = ss.po.Remove(workKey)
 	if err != nil {
@@ -162,6 +188,7 @@ func (ss *SharedState) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// respond
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -169,10 +196,14 @@ func (ss *SharedState) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 // array of objects with 'id', 'text', and 'is_palindrome' fields. The array
 // is sorted by 'id' in ascending order.
 func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
+	// no message id or payload to parse
+
+	// this will be our response data
 	data := GetAllMessagesResponseData{
 		Messages: []GetAllMessagesResponseItem{},
 	}
 
+	// get all messages
 	messages, err := ss.mo.GetAll()
 	if err != nil {
 		log.Println(err)
@@ -180,6 +211,8 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// for each message, get the corresponding palindrome work, then format and
+	// add to the response data
 	for _, m := range messages {
 		workKey := PWorkKeyFromMsg(m)
 		found, result, _, err := ss.po.Poll(workKey)
@@ -188,10 +221,15 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		} else if !found {
+			// This should never happen, but we can handle it. See GetMessage
+			// for more details.
+			log.Printf("No palindrome work found for message %d\n", m.id)
 			result = PalindromeWorkStatus{isPalindrome: P_UNKNOWN}
+			ss.po.Add(m)
 		}
 
-		// sort while we insert
+		// Sort the response while we insert. Messages will end up in ascending
+		// order by ID.
 		insertIndex := BinarySearch(data.Messages, func(m *GetAllMessagesResponseItem) int { return m.ID }, m.id)
 		data.Messages = slices.Insert(data.Messages, insertIndex, GetAllMessagesResponseItem{
 			ID:           m.id,
@@ -200,6 +238,7 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// respond
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(data)
@@ -207,6 +246,9 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 
 // DeleteAllMessages deletes all messages and returns 204, no body.
 func (ss *SharedState) DeleteAllMessages(w http.ResponseWriter, r *http.Request) {
+	// no message id or payload to parse
+
+	// delete all messages
 	err := ss.mo.DeleteAll()
 	if err != nil {
 		log.Println(err)
@@ -214,7 +256,14 @@ func (ss *SharedState) DeleteAllMessages(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// cancel all palindrome work
 	err = ss.po.Clear()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	// respond
 	w.WriteHeader(http.StatusNoContent)
 }
