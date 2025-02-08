@@ -90,4 +90,4 @@ main, handler, messages, palindromes, palindrome_calculation, helpers, shared_st
 
 ## Diagrams
 
-![UpdateMessage sequence diagram](./diagrams/UpdateMessage_Sequence.png)
+![UpdateMessage sequence diagram](./diagrams/UpdateMessage_Sequence.drawio.png)
