@@ -24,6 +24,10 @@ I decided not to make the data persistent. This eases set up (so other people ca
 
 I like using plurals (messages not message) as it's more flexible. I used a PUT instead of a PATCH, as we're effectively replacing the entire data. I think these endpoints are fairly self-descriptive. The DELETE /messages was not required by the brief, but helped with testing.
 
+### Request / Response
+
+Their types. Note that although isPalindrome is used internally, is_palindrome is returned to the user (all JSON uses snake_case).
+
 ## Setup
 
 Default port is 8090.
@@ -111,7 +115,7 @@ Inbetween the `update (id, text)` call to Messages and the `add (msg_2)` call to
 
 On insert, Messages would have to verify that the id of the message to be inserted does not already exist. I think this is an overall better approach in that it's more flexible and prevents the race condition, but it puts more work whatever code is calling Messages. 
 
-TODO: put in UML diagram here with MessageOrchestrator, Messages, WorkOrchestrator, and Palindromes
+![Messages and Palindromes UML](./diagrams/MP_UML.drawio.png)
 
 If Messages and Palindromes were to be persistent and store data to a database, I see two possible approaches:
 

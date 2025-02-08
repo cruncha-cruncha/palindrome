@@ -11,7 +11,7 @@ import (
 // 
 // If two messages have the same text, they will have the same hash, and share
 // the same PalindromeWork. They will each have their own listener (a channel
-// which receives a message everytime status changes). If all messages with the
+// which receives a message everytime result changes). If all messages with the
 // same hash are removed, the corresponding PalindromeWork is removed. Old work
 // is not cached.
 type Palindromes struct {
@@ -28,14 +28,14 @@ func NewPalindromes() Palindromes {
 }
 
 // PalindromeWork holds all the information necessary to determine if a string
-// is a palindrome. The status field contains the result of the calculation 
+// is a palindrome. The result field contains the result of the calculation 
 // and whether or not the calculation is done. Listeners and cancel should never
 // be closed outside of Palindromes methods.
 type PalindromeWork struct {
 	hash      string
-	status    PalindromeWorkStatus
-	// key: message id, value: a channel, receives updates when status changes
-	listeners map[int]chan PalindromeWorkStatus
+	result    PWResult
+	// key: message id, value: a channel, receives updates when result changes
+	listeners map[int]chan PWResult
 	// Used to abort work early
 	cancel    chan bool
 }
@@ -48,8 +48,8 @@ type PalindromeWork struct {
 // this method will never error. The onChange channel is unique per message id.
 // This method is safe for concurrent use. If there is work to do, it calls
 // doWork in new a goroutine.
-func (p *Palindromes) Add(msg Message) (key PalindromeWorkKey, current PalindromeWorkStatus, onChange chan PalindromeWorkStatus, err error) {
-	key = PalindromeWorkKey{
+func (p *Palindromes) Add(msg Message) (key PWKey, current PWResult, onChange chan PWResult, err error) {
+	key = PWKey{
 		hash:      msg.hash,
 		messageId: msg.id,
 	}
@@ -59,20 +59,20 @@ func (p *Palindromes) Add(msg Message) (key PalindromeWorkKey, current Palindrom
 	work, ok := p.work[msg.hash]
 
 	if ok {
-		onChange = make(chan PalindromeWorkStatus, 1)
+		onChange = make(chan PWResult, 1)
 		if listener, ok := work.listeners[msg.id]; ok {
 			onChange = listener
 		} else {
 			work.listeners[msg.id] = onChange
 		}
 
-		return key, work.status, onChange, nil
+		return key, work.result, onChange, nil
 	}
 
 	work = PalindromeWork{
 		hash:     msg.hash,
-		listeners: map[int]chan PalindromeWorkStatus{msg.id: make(chan PalindromeWorkStatus, 1)},
-		status: PalindromeWorkStatus{
+		listeners: map[int]chan PWResult{msg.id: make(chan PWResult, 1)},
+		result: PWResult{
 			isPalindrome: P_UNKNOWN,
 			done:         false,
 		},
@@ -82,7 +82,7 @@ func (p *Palindromes) Add(msg Message) (key PalindromeWorkKey, current Palindrom
 
 	go p.doWork(msg)
 
-	return key, work.status, work.listeners[0], nil
+	return key, work.result, work.listeners[0], nil
 }
 
 // Remove is used to cancel or delete work. If work is in progress and no other
@@ -90,7 +90,7 @@ func (p *Palindromes) Add(msg Message) (key PalindromeWorkKey, current Palindrom
 // removed. If no work is found, no action is taken. If work is found but other
 // messages are relying on it, only this message's listener is removed. This
 // method is safe for concurrent use.
-func (p *Palindromes) Remove(key PalindromeWorkKey) error {
+func (p *Palindromes) Remove(key PWKey) error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
@@ -123,19 +123,19 @@ func (p *Palindromes) Remove(key PalindromeWorkKey) error {
 // If work corresponding to the key's hash is found, but there is no listener
 // for the key's messageId, then found is true but onChange is nil. No listener
 // is added.
-func (p *Palindromes) Poll(key PalindromeWorkKey) (found bool, current PalindromeWorkStatus, onChange chan PalindromeWorkStatus, err error) {
+func (p *Palindromes) Poll(key PWKey) (found bool, current PWResult, onChange chan PWResult, err error) {
 	p.lock.RLock()
 	work, ok := p.work[key.hash]
 	p.lock.RUnlock()
 
 	if !ok {
-		return false, PalindromeWorkStatus{}, nil, nil
+		return false, PWResult{}, nil, nil
 	}
 
 	if onChange, ok = work.listeners[key.messageId]; !ok {
-		return true, work.status, nil, nil
+		return true, work.result, nil, nil
 	} else {
-		return true, work.status, onChange, nil
+		return true, work.result, onChange, nil
 	}
 }
 

@@ -85,7 +85,7 @@ func (ss *SharedState) GetMessage(w http.ResponseWriter, r *http.Request) {
 
 		// Can safely return P_UNKNOWN, even though it could be annoying for the
 		// user.
-		result = PalindromeWorkStatus{isPalindrome: P_UNKNOWN}
+		result = PWResult{isPalindrome: P_UNKNOWN}
 	}
 
 	// respond with the message text and palindrome status
@@ -229,7 +229,7 @@ func (ss *SharedState) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 		} else if !found {
 			// This should never happen, but we can handle it. See GetMessage
 			// for more details.
-			result = PalindromeWorkStatus{isPalindrome: P_UNKNOWN}
+			result = PWResult{isPalindrome: P_UNKNOWN}
 			ss.po.Add(m)
 		}
 

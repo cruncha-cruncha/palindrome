@@ -9,7 +9,7 @@ package main
 // easier to understand a service at a glance and reduces boilerplate code.
 type SharedState struct {
 	mo MessageOrchestrator
-	po WorkOrchestrator[Message, PalindromeWorkKey, PalindromeWorkStatus]
+	po WorkOrchestrator[Message, PWKey, PWResult]
 }
 
 // MessageOrchestration is an interface for a service that can store and
@@ -61,19 +61,20 @@ type WorkOrchestrator[D any, K any, R any] interface {
 	Clear() error
 }
 
-// PalindromeWorkStatus is the result of a palindrome calculation. It has two
-// fields: isPalindrome (P_UNKNOWN, P_TRUE, or P_FALSE) and done (bool).
-type PalindromeWorkStatus struct {
+// PWResult (aka PalindromeWorkResult) is the result of a palindrome
+// calculation. It has two fields: isPalindrome (P_UNKNOWN, P_TRUE, or P_FALSE)
+// and done (bool).
+type PWResult struct {
 	isPalindrome int
 	done         bool
 }
 
-// PalindromeWorkKey is the unique identifier for a piece of palindrome
-// calculation work. It has two fields: hash (string, hopefully unique to some
-// text) and messageId (integer, unique to a message). Hash determines
-// isPalindrome, while messageId determines onChange (each message gets its
-// own listener).
-type PalindromeWorkKey struct {
+// PWKey (aka PalindromeWorkKey) is the unique identifier for a piece of
+// palindrome calculation work. It has two fields: hash (string, hopefully
+// unique to some text) and messageId (integer, unique to a message). Hash
+// determines isPalindrome, while messageId determines onChange (each message
+// gets its own listener).
+type PWKey struct {
 	hash      string
 	messageId int
 }

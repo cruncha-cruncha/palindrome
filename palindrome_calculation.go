@@ -70,7 +70,7 @@ func StringIsPalindrome(s string) int {
 func (p *Palindromes) doWork(msg Message) {
 	isPalindrome := StringIsPalindrome(msg.text)
 
-	newStatus := PalindromeWorkStatus{
+	newResult := PWResult{
 		isPalindrome: isPalindrome,
 		done:         true,
 	}
@@ -106,11 +106,11 @@ func (p *Palindromes) doWork(msg Message) {
 	// update work
 	p.lock.Lock()
 	if work, ok := p.work[msg.hash]; ok {
-		work.status = newStatus
+		work.result = newResult
 		p.work[msg.hash] = work
 		for _, listener := range work.listeners {
 			select {
-			case listener <- newStatus:
+			case listener <- newResult:
 			default:
 			}
 		}

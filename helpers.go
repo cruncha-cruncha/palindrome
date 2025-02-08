@@ -17,7 +17,7 @@ func CalculateHash(text string) string {
 	return fmt.Sprintf("%x", bs)
 }
 
-// ParseIdFromPath extracts the "id" parameter from the request path. It uses 
+// ParseIdFromPath extracts the "id" parameter from the request path. It uses
 // the gorilla/mux package. It returns 0 and an error if the "id" parameter is
 // not found or if it is not a valid integer.
 func ParseIdFromPath(r *http.Request) (int, error) {
@@ -39,7 +39,7 @@ func ParseIdFromPath(r *http.Request) (int, error) {
 // it's already sorted. The selector function is used to determine an elements
 // value for the purpose of comparison. So every element E has a an associated
 // integer I.
-// 
+//
 // BinarySearch returns the index of some element E having I == target. It could
 // be the first index, the last, or one inbetween (there's no guarantee). If no
 // suitable element E is found, it returns the index where an element with I ==
@@ -67,8 +67,8 @@ func BinarySearch[T any](arr []T, selector func(*T) int, target int) int {
 
 // PWorkKeyFromMsg is a convenience function which creates a PalindromeWorkKey
 // from a Message.
-func PWorkKeyFromMsg(msg Message) PalindromeWorkKey {
-	return PalindromeWorkKey{
+func PWorkKeyFromMsg(msg Message) PWKey {
+	return PWKey{
 		hash:      msg.hash,
 		messageId: msg.id,
 	}
