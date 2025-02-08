@@ -121,3 +121,65 @@ If Messages and Palindromes were to be persistent and store data to a database, 
 
 1. Pass a db pool/connection into the constructor. This approach is simple, and requires little modification to existing code. However the db connection could not be modified after instantiation, and I'm not sure how transactions across multiple methods could be implemented.
 2. Modify the interface so all methods require a db pool/connection/tx. This approach requires modifying a lot of existing code and puts more work on the calling code (has to manage the db connection). It is more flexible, keeps the db connection in shared state, and could support transactions across methods. I would prefer this approach.
+
+## Development Approach and Decsisions / Reasoning / Design
+
+Make this a separate document?
+
+Read the entire brief several times. First question: what language? Decided on golang as I'm good at it and know the company uses it. It's also easy to get up and running.
+
+Next, endpoints. WHat endpoints do we need and what will they do? Need to follow REST best practices. Came up with the list as they are above, but without the DeleteAll endpoint.
+
+Next, what's my timeline? I wanted to get this done quickly, it's a pretty simple service. But it was a Thursday, and already mostly gone. Let's aim for Monday. That gave me two extra days (Saturday and Sunday) with which to hang myself (increase complexity beyong what's needed).
+
+With the timeline sorted out, let's hammer out the scope. How to serve? Use a framework / package, write my own, or built-in net/http? I decided on net/http, but would later add gorilla/mux for url variable support.
+
+Next, do I want messages to be persisted to disk somehow? I decided know. It's doable, but I wanted to spend my time in other areas. The brief was unclear. If this was a real assignment, I would definitely reach out for clarification.
+
+Next, the overall architecture of the service. How to break it into manageable pieces with nice abstractions and encapsulations? My original idea was to have a Messages struct, which would handle everything related to messages. 
+
+Next, how to schedule my time? I like writing code first (for better or worse). I wanted to have the code finalized by noon Friday, so I could spend a lot of time on documentation. 
+
+What are the unknowns for the code? What questions do I have? Do I need to reach out to answer them? I decided to:
+
+1. Get a minimal API service running with all the packages I'd need.
+2. Establish how to share state
+3. Add non-function endpoints. It was during this step I realized the necessity for gorilla/mux.
+4. Write the Messages struct
+5. Make the endpoints functional
+6. Add unit tests
+7. Add end-to-end tests
+8. Documentation
+
+Right off the bat I knew I wanted end-to-end tests, but didn't know exactly how. I'd also never done unit testing in production go code but knew it was possible. After reading some documentation on go test, quickly integrated a bunch of those.
+
+Earlier, branching strategy? Could just commit everything to main. Decided to use some sort of 'feature branch' strategy, which was more like a what-part-of-the-project-i'm-on strategy. So there ended up being five branches (as of right now): main, comments, scratch, separate-palindromes, and tests.
+
+- scratch was for figuring out all the packages, getting things running, getting an initial version out (all the way up to step 5)
+- tests came along afterwards, and was for step 6 and 7
+- then separate-palindromes came in, when I realized I didn't like the architecture of the program (more later)
+- then finally comments, for all documentation
+
+The separate-palindromes branch became necessary when I realized I wanted to do a big re-write on Friday. We know the plan, but how did it actually work out in practice?
+
+The service was working by Thursday night. And the code supported an artifical delay for calculating palindromes. But as usual, in my time spent not coding, I was thinking about the code.
+
+I realized that the Messages struct was doing too much, and I should have a Palindromes struct for long-running work. This separation of concerns would support extensibility and clarity. This came to me Thursday night, and I wanted to do a big re-write on Friday. Ended up missing the deadline of code-freeze Friday noon, ended up being Saturday noon.
+
+Now onto documentation. A couple of things were obvious to me: I knew other languages have some commenting standards or tools which can automatically understand comments, and I wanted that. I quickly re-discovered the godoc specification and ran with that.
+
+I took a brief detour at looking into OpenAPI docs (I've used Swaggerhub before), but decided it wasn't worth it.
+
+Comments are good, also need a README. Left that until last so I could write with confidence. 
+
+Then diagrams. I was dreading this. I'd used Lucid Chart and Mermaid before, but was not impressed with either (found both cumbersome). Then I realized I should figure out what diagrams I wanted? Looked around at what was possible, some I'd heard of and some I hadn't (C4, sequence, service architecture diagram, UML, flowchart with swimlanes). Decided I needed a sequence diagram for the UpdateMessage handler, as I had looked at that code several times to make sure it was correct, and a diagram would help me understand. Knew I wanted an overall architecture diagram but wasn't sure how (still not quite sure).
+
+Now I went looking for software to help me, found draw io, which reminded me alittle bit of Lucid Chart but was open source so felt better. And they have a desktop app! Figured out how to export higher-quality pngs. Figured out how to embed a png in markdown. And we're off to the races.
+
+Came up with a basic architecture diagram, not following any sort of specific template but I like it.
+
+Decided a UML diagram would be helpful for the Messages and Palindromes structs, and their associates. Three different diagrams, all helpful I think. 
+
+Now I'm finishing the README. Will go through several edits, clean up my verbiage, re-organize (while practicing a presentation). Will definitely keep tweaking it.
+
+But back to my overall approach. Questions: how can I accomplish this task simply? What questions do I have? How long will that take? How can I accomplish this task better?
