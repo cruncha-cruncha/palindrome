@@ -87,3 +87,7 @@ main, handler, messages, palindromes, palindrome_calculation, helpers, shared_st
 - handlers all follow a pattern of: get payload data / url variables, call orchestrators, then return
 - generally update messages before updating palindrome work, but the code will still handle cases where a message exists but it's work does not
 - all request and response payloads have their own type
+
+## Diagrams
+
+![UpdateMessage sequence diagram](./diagrams/UpdateMessage_Sequence.png)

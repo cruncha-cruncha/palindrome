@@ -78,7 +78,7 @@ From `delay_zero.py`:
 34. DELETE /messages: OK
 35. GET /messages: OK
 
-From `delay_five.py` (and `S_DELAY=5`):
+From `delay_five.py` (with `S_DELAY=5`):
 
 1. GET /messages: OK
 2. POST /messages (racecar): OK, got id 1
