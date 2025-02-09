@@ -50,13 +50,13 @@ type WorkOrchestrator[D any, K any, R any] interface {
 	// be used to cancel the work and remove it's result, or poll for progress.
 	// Current result after just starting work is usually empty. OnChange will
 	// recieve updates when the result changes.
-	Add(d D) (key K, current R, onChange chan R, err error)
+	Add(d D) (key K, current R, onChange <-chan R, err error)
 	// Remove cancels work and removes the result.
 	Remove(key K) error
 	// Poll returns the current result of work (could be in progress or done).
 	// It also returns onChange which will recieve updates when the result
 	// changes.
-	Poll(key K) (found bool, current R, onChange chan R, err error)
+	Poll(key K) (found bool, current R, onChange <-chan R, err error)
 	// Clear cancels all work and removes all results.
 	Clear() error
 }

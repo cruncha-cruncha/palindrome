@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// P_UNKNOWN is used for both an empty string, and while calculating if a string
+// P_UNKNOWN is used for both an empty string and while calculating if a string
 // is a palindrome. P_TRUE and P_FALSE are self-explanatory.
 const (
 	P_UNKNOWN = 0

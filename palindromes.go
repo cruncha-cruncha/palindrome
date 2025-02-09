@@ -48,7 +48,7 @@ type PalindromeWork struct {
 // this method will never error. The onChange channel is unique per message id.
 // This method is safe for concurrent use. If there is work to do, it calls
 // doWork in new a goroutine.
-func (p *Palindromes) Add(msg Message) (key PWKey, current PWResult, onChange chan PWResult, err error) {
+func (p *Palindromes) Add(msg Message) (key PWKey, current PWResult, onChange <-chan PWResult, err error) {
 	key = PWKey{
 		hash:      msg.hash,
 		messageId: msg.id,
@@ -59,7 +59,7 @@ func (p *Palindromes) Add(msg Message) (key PWKey, current PWResult, onChange ch
 	work, ok := p.work[msg.hash]
 
 	if ok {
-		onChange = make(chan PWResult, 1)
+		onChange := make(chan PWResult, 1)
 		if listener, ok := work.listeners[msg.id]; ok {
 			onChange = listener
 		} else {
@@ -124,7 +124,7 @@ func (p *Palindromes) Remove(key PWKey) error {
 // If work corresponding to the key's hash is found, but there is no listener
 // for the key's messageId, then found is true but onChange is nil. No listener
 // is added.
-func (p *Palindromes) Poll(key PWKey) (found bool, current PWResult, onChange chan PWResult, err error) {
+func (p *Palindromes) Poll(key PWKey) (found bool, current PWResult, onChange <-chan PWResult, err error) {
 	p.lock.RLock()
 	work, ok := p.work[key.hash]
 	p.lock.RUnlock()
