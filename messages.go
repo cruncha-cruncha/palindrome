@@ -14,7 +14,7 @@ type Messages struct {
 	nextId   atomic.Uint64
 }
 
-// NewMessageOrchestrator creates a new MessageOrchestrator with no messages.
+// NewMessages creates a new Messages struct with no messages.
 func NewMessages() Messages {
 	return Messages{
 		messages: sync.Map{},
@@ -22,6 +22,9 @@ func NewMessages() Messages {
 	}
 }
 
+// Add takes in some text and returns a Message, with a unique id and the hash
+// of that text. This particular implementation will never throw an error. Once
+// a message is added, it's immediately available for retrieval / deletion.
 func (m *Messages) Add(text string) (Message, error) {
 	msg := Message{
 		id:   int(m.nextId.Add(1)),
@@ -31,31 +34,11 @@ func (m *Messages) Add(text string) (Message, error) {
 
 	m.messages.Store(msg.id, msg)
 
-	// go func(msg Message, done chan int) {
-	// 	// calculate isPalindrome
-	// 	isPalindrome := StringIsPalindrome(text)
-
-	// 	// if this was a real slow calculation, I would break it up and check stopChan periodically
-
-	// 	select {
-	// 	case <-msg.stop:
-	// 		// if any value, then don't update
-	// 	default:
-	// 		// update only if no changes since we started
-	// 		mo.messages.CompareAndSwap(msg.id, msg, Message{
-	// 			id:           msg.id,
-	// 			text:         msg.text,
-	// 			isPalindrome: isPalindrome,
-	// 			stop:         nil,
-	// 		})
-	// 	}
-
-	// 	done <- isPalindrome
-	// }(msg, done)
-
 	return msg, nil
 }
 
+// Get returns a Message by id. This particular implementation will never throw
+// an error, but it will return false if the message doesn't exist.
 func (m *Messages) Get(id int) (Message, bool, error) {
 	if msg, ok := m.messages.Load(id); !ok {
 		return Message{}, false, nil
@@ -64,6 +47,9 @@ func (m *Messages) Get(id int) (Message, bool, error) {
 	}
 }
 
+// Update takes in a Message id and some text. It will completely replace the 
+// corresponding Message's text and update it's hash if the Message exists. If 
+// not, it will throw and error.
 func (m *Messages) Update(id int, text string) (Message, error) {
 	msg := Message{
 		id:   id,
@@ -81,11 +67,17 @@ func (m *Messages) Update(id int, text string) (Message, error) {
 	return msg, nil
 }
 
+// Delete removes a Message by id. This particular implementation will never
+// throw an error. There is no way to tell if the message existed or not.
 func (m *Messages) Delete(id int) error {
 	m.messages.LoadAndDelete(id)
 	return nil
 }
 
+// GetAll returns all messages in the system. This particular implementation
+// will never throw an error. Due to the limitations of the sync.Map type, the
+// messages are not guaranteed to be in any particular order nor do they
+// represent a single snapshot at one point in time.
 func (m *Messages) GetAll() ([]Message, error) {
 	out := []Message{}
 	m.messages.Range(func(key, value any) bool {
@@ -96,6 +88,8 @@ func (m *Messages) GetAll() ([]Message, error) {
 	return out, nil
 }
 
+// DeleteAll removes all messages from the system. This particular
+// implementation will never throw an error.
 func (m *Messages) DeleteAll() error {
 	m.messages.Clear()
 	return nil

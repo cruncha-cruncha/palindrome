@@ -1,6 +1,8 @@
 from test_data import *
 from queries import *
 
+# run with server like: S_DELAY=0 go run .
+
 def go():
     log = logger()
     local_data = {}

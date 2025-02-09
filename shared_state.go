@@ -9,7 +9,7 @@ package main
 // easier to understand a service at a glance and reduces boilerplate code.
 type SharedState struct {
 	mo MessageOrchestrator
-	po WorkOrchestrator[Message, PalindromeWorkKey, PalindromeWorkStatus]
+	po WorkOrchestrator[Message, PWKey, PWResult]
 }
 
 // MessageOrchestration is an interface for a service that can store and
@@ -25,25 +25,56 @@ type MessageOrchestrator interface {
 	DeleteAll() error
 }
 
+// Message is a simple struct for storing a message. It has three fields: an id
+// (integer, unique, ascending), a hash (string, calculated from the text,
+// hopefully unique), and the text (string, provided by the user). On adding a
+// message to Messages, all three fields will be populated.
+//
+// Hash is used to de-duplicate work when calculating palindromes. If two
+// messages have the same text, then they will have the same hash, and so only
+// one palindrome calculation needs to be done.
 type Message struct {
 	id   int
 	hash string
 	text string
 }
 
+// WorkOrchestrator is an interface for helping manage long-running tasks, all
+// of the same type (like calculating if a string is a palindrome). It's types
+// are; D: all the Data needed to start work; K: a Key to identify any one
+// piece of work; and R: the Result of some work. R should provide some
+// indication of started/in progress/done. Once work is finished, the result is
+// stored until explicitly removed. 
 type WorkOrchestrator[D any, K any, R any] interface {
+	// Add takes in some data and starts work on it. It returns a key which can
+	// be used to cancel the work and remove it's result, or poll for progress.
+	// Current result after just starting work is usually empty. OnChange will
+	// recieve updates when the result changes.
 	Add(d D) (key K, current R, onChange chan R, err error)
+	// Remove cancels work and removes the result.
 	Remove(key K) error
+	// Poll returns the current result of work (could be in progress or done).
+	// It also returns onChange which will recieve updates when the result
+	// changes.
 	Poll(key K) (found bool, current R, onChange chan R, err error)
+	// Clear cancels all work and removes all results.
 	Clear() error
 }
 
-type PalindromeWorkStatus struct {
+// PWResult (aka PalindromeWorkResult) is the result of a palindrome
+// calculation. It has two fields: isPalindrome (P_UNKNOWN, P_TRUE, or P_FALSE)
+// and done (bool).
+type PWResult struct {
 	isPalindrome int
 	done         bool
 }
 
-type PalindromeWorkKey struct {
+// PWKey (aka PalindromeWorkKey) is the unique identifier for a piece of
+// palindrome calculation work. It has two fields: hash (string, hopefully
+// unique to some text) and messageId (integer, unique to a message). Hash
+// determines isPalindrome, while messageId determines onChange (each message
+// gets its own listener).
+type PWKey struct {
 	hash      string
 	messageId int
 }
@@ -57,12 +88,5 @@ func NewSharedState() SharedState {
 	return SharedState{
 		mo: &mo,
 		po: &po,
-	}
-}
-
-func PWorkKeyFromMsg(msg Message) PalindromeWorkKey {
-	return PalindromeWorkKey{
-		hash:      msg.hash,
-		messageId: msg.id,
 	}
 }
