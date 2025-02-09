@@ -81,7 +81,7 @@ Messages retrieved via GET /messages have fields [id, text, is_palindrome] while
 
 Message ids are positive integers starting at 1. They're guaranteed to be unique and are not re-used. Messages in the 'messages' payload response array field of a GET /messages request are sorted in ascending order by id.
 
-Note that is_palindrome is parsed into a golang struct field named isPalindrome, and vice-versa.
+Note that all is_palindrome fields are parsed into a Golang struct field named isPalindrome, and vice-versa (in this project, JSON uses snake_case while Golang uses camelCase).
 
 ## Setup
 
@@ -139,7 +139,7 @@ Figure 1 depicts general data flow. All incoming requests hit [ListenAndServe](h
 
 Messages and Palindromes are two separate structs because they're responsible for different things. Messages methods return immediately, whereas Palindromes kicks off work that could take awhile. Currently, each handler is responsible for ensuring consistency between Messages and Palindromes, a not-ideal situation discussed in more detail later on (see Figure 2 in [Handlers](#handlers)).
 
-The `doWork` method determines if some text is a palindrome. It may take time to calculate, so is always invoked in a new goroutine. If this code was running in production, spawning a goroutine without checking how many are already running could be problematic.
+The `doWork` method determines if some text is a palindrome. It may take time to calculate, so is always invoked in a new goroutine. If this code was running in production and doing real work, spawning a heavy goroutine without first checking how many are already running is *not ideal*.
 
 ### Files
 
@@ -193,110 +193,24 @@ To determine if some message text is a palindrome, we must call `Palindromes.Add
 
 ## Persistence
 
-If `Messages` and `Palindromes` were to store data to disk, I see two possible approaches:
+If `Messages` or `Palindromes` were to store data to disk, I see two possible approaches:
 
 1. Pass a db pool/connection into the constructor. This approach is simple, and requires little modification to existing code. However the db connection could not be modified after instantiation, and I'm not sure how transactions across multiple methods could be implemented.
 2. Modify the interface so all methods require a db pool/connection/tx. This approach requires modifying a lot of existing code and puts more work on the calling code (has to manage the db connection). It is more flexible, keeps the db connection in shared state, and could support transactions across methods. I would prefer this approach.
 
-## Reasoning
-
 TODO: above has been edited, below has not
 
-Make this a separate document?
+## Closing Thoughts
 
-Read the entire brief several times. First question: what language? Decided on golang as I'm good at it and know the company uses it. It's also easy to get up and running.
+Strengths:
 
-Next, endpoints. WHat endpoints do we need and what will they do? Need to follow REST best practices. Came up with the list as they are above, but without the DeleteAll endpoint.
+- Splitting fast and slow task processing into Messages and Palindromes illustrates a clean separation of concerns and is extensible.
+- Two channels (onChange and cancel) can be used to safely and successfully interact with a long-running goroutine, as long as the cancel channel isn't closed prematurely. Writes are also asynchronous (they don't wait for a read) and buffered, de-coupling logic and improving overall speed.
+- Despite over-complicating the implementation, development and delivery was on-schedule. I identified unknowns early on and managed scope well. I followed a simple three-step plan: coding (and exploration), then testing, and finally documentation. Each step was time-boxed to stay on track.
 
-Next, what's my timeline? I wanted to get this done quickly, it's a pretty simple service. But it was a Thursday, and already mostly gone. Let's aim for Monday. That gave me two extra days (Saturday and Sunday) with which to hang myself (increase complexity beyong what's needed).
+Learnings:
 
-With the timeline sorted out, let's hammer out the scope. How to serve? Use a framework / package, write my own, or built-in net/http? I decided on net/http, but would later add gorilla/mux for url variable support.
-
-Next, do I want messages to be persisted to disk somehow? I decided know. It's doable, but I wanted to spend my time in other areas. The brief was unclear. If this was a real assignment, I would definitely reach out for clarification.
-
-Next, the overall architecture of the service. How to break it into manageable pieces with nice abstractions and encapsulations? My original idea was to have a Messages struct, which would handle everything related to messages.
-
-Next, how to schedule my time? I like writing code first (for better or worse). I wanted to have the code finalized by noon Friday, so I could spend a lot of time on documentation.
-
-What are the unknowns for the code? What questions do I have? Do I need to reach out to answer them? I decided to:
-
-1. Get a minimal API service running with all the packages I'd need.
-2. Establish how to share state
-3. Add non-function endpoints. It was during this step I realized the necessity for gorilla/mux.
-4. Write the Messages struct
-5. Make the endpoints functional
-6. Add unit tests
-7. Add end-to-end tests
-8. Documentation
-
-Establishing how to share state took some thinking. Ended up going with this [approach](https://drstearns.github.io/tutorials/gohandlerctx/#secreceivers).
-
-Right off the bat I knew I wanted end-to-end tests, but didn't know exactly how. I'd also never done unit testing in production go code but knew it was possible. After reading some documentation on go test, quickly integrated a bunch of those. (started [here](https://go.dev/doc/tutorial/add-a-test))
-
-Wrote a checklist, marked things off and added things as need-be. One of the things I wasn't sure about was how to organize the project? Other go projects I've worked on have had all the files in a single directory, and I wasn't sure it was kosher (certainly not for scoping / visibility / field privacy: I know fields are accessible to all code in the same package). After reading [this](https://go.dev/doc/modules/layout) I kept the flat layout.
-
-Both the unit tests and the end-to-end tests ended up catching bugs, so I'm glad I wrote them.
-
-Earlier, branching strategy? Git commit message format? It was a given from the start that I would use Github; it's what I'm familiar with but also was requested in the brief. Could just commit everything to main. Decided to use some sort of 'feature branch' strategy, which was more like a what-part-of-the-project-i'm-on strategy. So there ended up being five branches (as of right now): main, comments, scratch, separate-palindromes, and tests.
-
-- scratch was for figuring out all the packages, getting things running, getting an initial version out (all the way up to step 5)
-- tests came along afterwards, and was for step 6 and 7
-- then separate-palindromes came in, when I realized I didn't like the architecture of the program (more later)
-- then finally comments, for all documentation
-
-The separate-palindromes branch became necessary when I realized I wanted to do a big re-write on Friday. We know the plan, but how did it actually work out in practice?
-
-The service was working by Thursday night. And the code supported an artifical delay for calculating palindromes. But as usual, in my time spent not coding, I was thinking about the code.
-
-I realized that the Messages struct was doing too much, and I should have a Palindromes struct for long-running work. This separation of concerns would support extensibility and clarity. This came to me Thursday night, and I wanted to do a big re-write on Friday. Ended up missing the deadline of code-freeze Friday noon, ended up being Saturday noon.
-
-Handling parallel code was lovely, and used several primitives from the [sync](https://pkg.go.dev/sync) package. I had to re-introduce myself to channels, and how they are meant to be one-way communication. That was part of my problem with doing everything in Messages approach: it exposed a 'cancel' channel which was meant to be written to outside of the Messages struct, but could be closed inside of it.
-
-Now onto documentation. A couple of things were obvious to me: I knew other languages have some commenting standards or tools which can automatically understand comments, and I wanted that. I quickly re-discovered the [godoc specification](https://tip.golang.org/doc/comment) and ran with that.
-
-I took a brief detour at looking into OpenAPI docs (I've used Swaggerhub before), but decided it wasn't worth it.
-
-Comments are good, also need a README. Left that until last so I could write with confidence.
-
-Then diagrams. I was dreading this. I'd used Lucid Chart and Mermaid before, but was not impressed with either (found both cumbersome). Then I realized I should figure out what diagrams I wanted? Looked around at what was possible, some I'd heard of and some I hadn't (C4, sequence, service architecture diagram, UML, flowchart with swimlanes). Decided I needed a sequence diagram for the UpdateMessage handler, as I had looked at that code several times to make sure it was correct, and a diagram would help me understand. Knew I wanted an overall architecture diagram but wasn't sure how (still not quite sure).
-
-Now I went looking for software to help me, found draw io, which reminded me alittle bit of Lucid Chart but was open source so felt better. And they have a desktop app! Figured out how to export higher-quality pngs. Figured out how to embed a png in markdown. And we're off to the races.
-
-Came up with a basic architecture diagram, not following any sort of specific template but I like it.
-
-Decided a UML diagram would be helpful for the Messages and Palindromes structs, and their associates. Three different diagrams, all helpful I think.
-
-Now I'm finishing the README. Will go through several edits, clean up my verbiage, re-organize (while practicing a presentation). Will definitely keep tweaking it. And will go back and read the brief again to figure out what I missed.
-
-But back to my overall approach. Questions: how can I accomplish this task simply? What questions do I have? How long will that take? How can I accomplish this task better?
-
-## EDITS
-
-(Text I've cut while editing, kept here in case I want to reinsert it)
-
-Like every REST API, there needs to be some handlers. The built-in net/http doesn't support url variables, so let's use gorilla/mux. Now we can easily handle calls like GET /messages/17.
-
-I decided not to make the data persistent. This eases set up (so other people can run the code more easily). It also eases testing (just re-start the server, and we get a blank slate).
-
-Aside: the brief says "Provide some REST API documentation (either in Readme or in-line code)", so I should make sure this is very visible.
-
-There are several consequences to this decision:
-
-1. The API still needs to be responsive. It can't wait for work to finish. So we need explicit goroutines
-2. Goroutines means more thought needs to go into synchronization, and concurrent / parallel safe code
-3. We can't know the result of some work until later, so null values are required, or explicit in_progress status fields
-4. Some things can be done quickly and immediately. Separating the immediate and the eventual is crucial
-
-I wanted the long-running tasks to be somewhat efficient. So if two messages come in with the same text, only one calculation is required. If a message is created then immediately deleted, cancel the work being done in the background.
-
-- gorilla mux, net/http -> every request gets a new goroutine
-- handlers are all methods on a shared state object
-- the shared state object has a message orchestrator, and palindrome work orchestrator
-- handlers all follow a pattern of: get payload data / url variables, call orchestrators, then return
-- generally update messages before updating palindrome work, but the code will still handle cases where a message exists but it's work does not
-- all request and response payloads have their own type
-- handlers do a lot of work. That work could be encapsulated into other functions or even another orchestrator (to make sure Messages and Palindromes stay in sync). This approach was not taken due to time constraints.
-
-I don't know exactly when / how many goroutines / threads are spawned / used by net/http (especially how responses are returned).
-
-
+- [Gorilla/mux](https://github.com/gorilla/mux) is an http multiplexer and works with Golang's net/http instead of replacing it entirely like [gin](https://github.com/gin-gonic/gin) or [fiber](https://github.com/gofiber/fiber).
+- [Draw.io](https://app.diagrams.net/) is a free, open-source, less-polished version of [Lucid Chart](https://www.lucidchart.com/pages).
+- I've previously been left unsatisfied after writing a Python script for simple end-to-end testing of a REST API, but not this time. The tests are understandable, useful, and easy to write.
+- By leveraging channels such that there are clear producers and consumers (writers and readers), and dis-allowing consumers to close a channel, it means that writes will never panic.

@@ -105,6 +105,7 @@ func (p *Palindromes) Remove(key PWKey) error {
 
 		if len(work.listeners) == 0 {
 			delete(p.work, key.hash)
+			// write asynchronously
 			select {
 			case work.cancel <- true:
 			default:
@@ -150,6 +151,7 @@ func (p *Palindromes) Clear() error {
 			close(listener)
 		}
 
+		// write asynchronously
 		select {
 		case work.cancel <- true:
 		default:

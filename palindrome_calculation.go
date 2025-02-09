@@ -83,6 +83,7 @@ func (p *Palindromes) doWork(msg Message) {
 	}
 
 	if delay > 0 {
+		// check if we should stop work early, four times during the articial delay
 		ms_delay := delay / 4 * 1000
 		for i := 0; i < 4; i++ {
 			time.Sleep(time.Duration(ms_delay) * time.Millisecond)
@@ -94,6 +95,7 @@ func (p *Palindromes) doWork(msg Message) {
 			if !ok {
 				return
 			} else {
+				// write asynchronously
 				select {
 				case <-work.cancel:
 					return
@@ -109,6 +111,7 @@ func (p *Palindromes) doWork(msg Message) {
 		work.result = newResult
 		p.work[msg.hash] = work
 		for _, listener := range work.listeners {
+			// write asynchronously
 			select {
 			case listener <- newResult:
 			default:
