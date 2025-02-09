@@ -7,9 +7,9 @@ import (
 	"slices"
 )
 
-// SaveMessage expects a JSON payload with a "text" field and returns 200 with
+// CreateMessage expects a JSON payload with a "text" field and returns 200 with
 // a JSON response, which has an "id" field (a positive integer).
-func (ss *SharedState) SaveMessage(w http.ResponseWriter, r *http.Request) {
+func (ss *SharedState) CreateMessage(w http.ResponseWriter, r *http.Request) {
 	// verify payload (need some text)
 	decoder := json.NewDecoder(r.Body)
 	var payload CreateMessageRequestData

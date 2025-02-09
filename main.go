@@ -16,7 +16,7 @@ func main() {
 	r := mux.NewRouter()
 	ss := NewSharedState()
 
-	r.Methods("POST").Path("/messages").HandlerFunc(ss.SaveMessage)
+	r.Methods("POST").Path("/messages").HandlerFunc(ss.CreateMessage)
 	r.Methods("GET").Path("/messages").HandlerFunc(ss.GetAllMessages)
 	r.Methods("DELETE").Path("/messages").HandlerFunc(ss.DeleteAllMessages)
 	r.Methods("GET").Path("/messages/{id}").HandlerFunc(ss.GetMessage)

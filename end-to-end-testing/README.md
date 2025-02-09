@@ -13,7 +13,7 @@ If the expect_status is different from what is normally considered successful, t
 
 ## Environment
 
-I wrote and ran these files on MacOs using Python 3.9.6 and the [requests](https://requests.readthedocs.io/en/latest/) package. Here are some commands that I found useful:
+I wrote and ran these files on MacOS using Python 3.9.6 and the [requests](https://requests.readthedocs.io/en/latest/) package. Here are some commands that I found useful:
 
 ```shell
 # establish a new python virtual env
