@@ -1,6 +1,6 @@
 # Testing
 
-This directory contains some python scripts for testing sequential calls to the REST API. The `queries.py` file defines six functions, corresponding to the server's endpoints. Each function makes a request and verifies the result, then returns the status code, response payload (JSON), and a 'hint' (a string describing what happened).
+This directory contains some Python scripts for testing sequential calls to the REST API. The `queries.py` file defines six functions, one for every endpoint. Each function makes a request and verifies the result, then returns the status code, response payload (JSON), and a 'hint' (a string describing what happened).
 
 - add_message(base_url, text, expect_status): POST /messages, expects 201, and an integer 'id' in the response payload
 - get_message(base_url, id, expect_status, expect_text, expect_is_palindrome): GET /messages/{id}, expects 200, string 'text', boolean (but can be None) 'is_palindrome'
@@ -9,7 +9,7 @@ This directory contains some python scripts for testing sequential calls to the 
 - get_all_messages(base_url, expect_status, expect_messages): GET /messages, expects 200, 'messages' array, with each item having 'id', 'text', and 'is_palindrome'
 - delete_all_messages(base_url, expect_status): DELETE /messages, expects 204, no data
 
-If the expect_status is different from what is normally considered successful, then the response payload is neither parsed nor validated. For example, attempting to get a message which doesn't exist should correctly return 404 with no payload.
+If the `expect_status` is different from what is normally considered successful, then the response payload is neither parsed nor validated. For example, attempting to get a message which doesn't exist should correctly return 404 with no payload.
 
 ## Environment
 
@@ -24,7 +24,7 @@ source .venv/bin/activate
 which python 
 # install the requests package
 pip install requests 
-# run a test (make sure go is running first)
+# run a test
 python delay_zero.py 
 # exit the virtual environment
 deactivate
@@ -32,9 +32,9 @@ deactivate
 
 ## Tests
 
-_Caution_: The last step of both tests removes all messages (so the tests can be run repeatedly), so don't run them if there are messages you'd like to keep. However the first step of both tests verifies that there are no messages, so how we ended up here I'm not sure.
+_Caution_: The last step of both tests removes all messages (so the tests can be run repeatedly): don't run them if there are messages you'd like to keep. However the first step of both tests verifies that there are no messages, so how we ended up here I'm not sure.
 
-There are two test files: `delay_zero.py` and `delay_five.py`. The go server / REST API can be run with an artificial delay when determining if some text is a palindrome, by setting the environment variable S_DELAY to some number of seconds. `delay_zero.py` expects the go server to have no delay (aka `S_DELAY=0` or just don't set it). `delay_five.py` expects the go server to have a five second delay (aka `S_DELAY=5`): in most cases, is_palindrome will be None until five seconds after the initial add_message POST request.
+There are two test files: `delay_zero.py` and `delay_five.py`. The Golang server / REST API can be run with an artificial delay (when determining if some text is a palindrome) by setting the environment variable `S_DELAY` to some number of seconds. `delay_zero.py` expects the Go server to have no delay (aka `S_DELAY=0` or just don't set it). `delay_five.py` expects the Go server to have a five second delay (aka `S_DELAY=5`): in most cases, `is_palindrome` will be None until five seconds after the initial `POST` request.
 
 Both tests raise an exception at the first sign of trouble, then immediately bail out.
 
