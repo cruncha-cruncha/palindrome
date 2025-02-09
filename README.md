@@ -8,7 +8,7 @@ This was intended to be a simple REST API. As implemented, data is not persisted
 > - Create, retrieve, update, and delete a message
 > - List messages
 
-But my implementation quickly got out of hand. I would write much simpler code if actually given this brief in a work setting, and conversely, would spend much more time reviewing code of this complexity if it was actually intended for release. My goal was to have some fun and demonstrate my capabilities while still satisfying the requirements. Please keep this in mind when reviewing the repo.
+But my implementation quickly got out of hand. If given this brief in a work setting, I would write much simpler code, and conversely, would spend much more time reviewing code of this complexity if it was actually intended for release. My goal was to have some fun and demonstrate my capabilities while still satisfying the requirements. Please keep this in mind while reviewing the repo.
 
 ## Endpoints
 
