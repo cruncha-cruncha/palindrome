@@ -21,7 +21,7 @@ But my implementation quickly got out of hand. If given this brief in a work set
 | PUT /messages/{id}    | UpdateMessage     | 200, 400, 404, 500 |
 | DELETE /messages/{id} | DeleteMessage     | 204, 400, 404, 500 |
 
-All handlers are methods on the `SharedState` struct, detailed [later](#architecture).
+All handlers are methods on a `SharedState` struct.
 
 _Design Notes_
 
@@ -131,7 +131,7 @@ _Fig. 1_
 
 Figure 1 depicts general data flow. All incoming requests hit [ListenAndServe](https://pkg.go.dev/net/http#ListenAndServe), which has been configured with [gorilla/mux](https://github.com/gorilla/mux) (so we can use url variables). Matched requests are routed to a handler (the middle column of rectangles in Figure 1), run in a per-request goroutine. All handlers have access to a `SharedState` struct, through which `Messages` and `Palindromes` are accessible.
 
-`Messages` and `Palindromes` are two separate structs because they're responsible for different things. `Messages` methods are synchronous, whereas `Palindromes` can kick off work that could take awhile. Currently, each handler is responsible for ensuring consistency between `Messages` and `Palindromes`, a situation discussed in more detail later on (see Figure 2 in [Handlers](#handlers)).
+`Messages` and `Palindromes` are two separate structs because they're responsible for different things. `Messages` methods are synchronous, whereas `Palindromes` can kick off work that could take awhile. Currently, each handler is responsible for ensuring consistency between `Messages` and `Palindromes`, a situation discussed in more detail later on (see Figure 2).
 
 The `doWork` method (`Palindromes.doWork(msg)`) determines if some text is a palindrome and then saves the result. It may take time to calculate, so is always invoked in a new goroutine. If this code was actually running in production and doing real work, spawning a heavy goroutine without first checking how many are already running is *not ideal*.
 
@@ -143,7 +143,7 @@ The `doWork` method (`Palindromes.doWork(msg)`) determines if some text is a pal
 - [palindromes.go](./palindromes.go): defines `Palindromes`, which implements `WorkOrchestrator`
 - [palindrome_calculation.go](./palindrome_calculation.go): defines functions for determining if text is a palindrome, including `doWork`.
 - [helpers.go](./helpers.go): defines small, self-contained functions which could be useful in several places and don't belong anywhere else
-- [shared_state.go](./shared_state.go): defines `SharedState` and provides the actual definition for some important interfaces (like `MessageOrchestrator` and `WorkOrchestrator`) and structs (like `Message`). It would be more typical to define the `Message` struct (for example) in the `messages.go` file, but I chose to define it in `shared_state.go` so we can get a quick overview of how the structs come together without having to look across multiple files. See [Figure 3](#shared-state) for more details on `SharedState`.
+- [shared_state.go](./shared_state.go): defines `SharedState` and provides the actual definition for some important interfaces (like `MessageOrchestrator` and `WorkOrchestrator`) and structs (like `Message`). It would be more typical to define the `Message` struct (for example) in the `messages.go` file, but I chose to define it in `shared_state.go` so we can get a quick overview of how the structs come together without having to look across multiple files.
 
 Some files have an associated x_test.go file for unit testing.
 
@@ -174,12 +174,12 @@ When saving a message, `Messages` would have to verify that the message id is no
 
 ## Shared State
 
-All handlers are methods on the `SharedState` struct. `SharedState` consists of `Messages`, which implements `MessageOrchestrator`, and `Palindromes`, which implements `WorkOrchestrator`. These two interfaces share nothing in common in terms of inheritance / composition / implementation, I just like the word 'orchestrator'. Let's look into the details of `Messages`, `Palindromes`, and associated structs.
+All handlers are methods on the `SharedState` struct ([code](./shared_state.go#L10)). `SharedState` consists of `Messages`, which implements `MessageOrchestrator`, and `Palindromes`, which implements `WorkOrchestrator`. These two interfaces share nothing in common in terms of inheritance / composition / implementation, I just like the word 'orchestrator'. Let's look into the details of `Messages`, `Palindromes`, and associated structs.
 
 ![Messages and Palindromes UML](./diagrams/MP_UML.drawio.png)
 _Fig. 3_
 
-Both `Messages` and `Palindromes` are thread-safe. `Messages` relies on pre-defined data structures from the [sync package](https://pkg.go.dev/sync), but `Palindromes` uses an explicit mutex as it's operations are more complex. The generic types of `WorkOrchestrator` are: D for Data, K for Key, and R for Result. `Palindromes.work` uses `PWKey.hash` as keys.
+Both `Messages` and `Palindromes` are thread-safe. `Messages` relies on pre-defined data structures from Golang's sync package, but `Palindromes` uses an explicit mutex as it's operations are more complex. The generic types of `WorkOrchestrator` are: D for Data, K for Key, and R for Result. `Palindromes.work` uses `PWKey.hash` as keys.
 
 A `PWKey`'s `messageId` and `hash` are identical to some `Message`'s `id` and `hash`; any `Message` can be converted into a `PWKey`. Each message corresponds to exactly one palindrome calculation, but a single palindrome calculation could correspond to multiple messages (if they have the same text, and therefore hash). This de-duplicates work.
 
