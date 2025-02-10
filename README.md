@@ -120,7 +120,7 @@ How can I challenge myself? If I'm going to make people wait 4 days for a simple
 
 Implementing this seemed fun and challenging to me, while also being vaguely applicable to the real world (replace 'palindrome determination' with any heavy workload). I had time, and thought about persisting data to disk (using a plain text file, sqlite, or even postgres), but wasn't excited about it. Let's continue with this new 'long-running-task-managment' design goal in mind.
 
-The `S_DELAY` environment variable artificially slows down the method used to determine whether a string is a palindrome and save the result (`Palindromes.doWork(msg)`).
+The `S_DELAY` environment variable artificially slows down the method used to determine whether a string is a palindrome and save the result (`Palindromes.doWork(msg)`, [code](./palindrome_calculation.go#L70)).
 
 ## Architecture
 
