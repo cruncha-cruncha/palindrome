@@ -189,7 +189,7 @@ The value of `PWResult.isPalindrome` is one of [ `P_UNKNOWN`, `P_TRUE`, `P_FALSE
 
 ## Persistence
 
-The SOP did not specify whether or not messages should be persistent, and I would have asked for clarification if this were a real work assignment. The current implementation does not persist messages. If `Messages` or `Palindromes` were to store data on disk, I see two possible approaches:
+The SOW did not specify whether or not messages should be persistent, and I would have asked for clarification if this were a real work assignment. The current implementation does not persist messages. If `Messages` or `Palindromes` were to store data on disk, I see two possible approaches:
 
 1. Pass a db pool/connection into the constructor. This approach is simple, and requires minimal changes to existing code. However the db connection could not be modified after instantiation, and I'm not sure how transactions across multiple methods could be implemented.
 2. Modify methods to require a db pool/connection/tx parameter. This approach exposes complexity instead of encapsulating it. But it's more flexible, keeps the db connection in shared state, and could support transactions across methods. I would prefer this approach.
