@@ -8,7 +8,7 @@ This was intended to be a simple REST API. As implemented, data is not persisted
 > - Create, retrieve, update, and delete a message
 > - List messages
 
-But my implementation quickly got out of hand. If given this brief in a work setting, I would write much simpler code, and conversely, would spend much more time reviewing code of this complexity if it was actually intended for release. My goal was to have some fun and demonstrate my capabilities while still satisfying the requirements. Please keep this in mind while reviewing the repo.
+But my implementation quickly [got out of hand](#purposefully-overcomplicating-the-implementation). If given this brief in a work setting, I would write much simpler code, and conversely, would spend much more time reviewing code of this complexity if it was actually intended for release. My goal was to have some fun and demonstrate my capabilities while still satisfying the requirements. Please keep this in mind while reviewing the repo.
 
 ## Endpoints
 
@@ -115,8 +115,6 @@ docker run -p 4000:8090 liam/palindrome-demo
 ```
 
 ## Purposefully Overcomplicating the Implementation
-
-_AKA: things get out of hand_
 
 How can I challenge myself? If I'm going to make people wait 4 days for a simple REST API, the results better be impressive. What if palindrome calculation was non-trivial and took a really long time? If determining whether "racecar" was a palindrome or not took ten seconds, our server needs to be not only responsive but also capable of processing long-running tasks, almost like an RPC system.
 
