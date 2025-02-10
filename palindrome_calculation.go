@@ -62,7 +62,7 @@ func StringIsPalindrome(s string) int {
 // doWork is a Palindromes method that calculates if a message is a palindrome.
 // Once completed, it saves the result and updates all listeners. It's safe to
 // to run concurrently.
-// 
+//
 // doWork can be artificially slowed down, and will take as long as S_DELAY
 // seconds (default 0) to complete. It's also cancellable, and checks 4 times
 // during S_DELAY to see if it should stop early. If stopped early, it leaves
@@ -95,7 +95,7 @@ func (p *Palindromes) doWork(msg Message) {
 			if !ok {
 				return
 			} else {
-				// write asynchronously
+				// read asynchronously
 				select {
 				case <-work.cancel:
 					return
