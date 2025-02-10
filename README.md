@@ -118,9 +118,9 @@ docker run -p 4000:8090 liam/palindrome-demo
 
 _AKA: things get out of hand_
 
-How can I challenge myself? If I'm going to make people wait 4 days for a simple REST API, the results better be impressive. What if palindrome calculation was non-trivial and took a really long time? Like determining whether "racecar" was a palindrome or not took ten seconds. Imagine that palindrome calculation is a stand-in for any heavy workload, and now our server needs to be not only responsive but also capable of processing long-running tasks, almost like an RPC system.
+How can I challenge myself? If I'm going to make people wait 4 days for a simple REST API, the results better be impressive. What if palindrome calculation was non-trivial and took a really long time? If determining whether "racecar" was a palindrome or not took ten seconds, our server needs to be not only responsive but also capable of processing long-running tasks, almost like an RPC system.
 
-Implementing this seemed fun and challenging to me, while also being vaguely applicable to the real world. I had thought about persisting data to disk (using a plain text file, sqlite, or even postgres), but wasn't excited about it, so let's continue with this new 'long-running-task-managment' design goal in mind.
+Implementing this seemed fun and challenging to me, while also being vaguely applicable to the real world (replace 'palindrome determination' with any heavy workload). I had time, and thought about persisting data to disk (using a plain text file, sqlite, or even postgres), but wasn't excited about it. Let's continue with this new 'long-running-task-managment' design goal in mind.
 
 The `S_DELAY` environment variable artificially slows down the method used to determine whether a string is a palindrome and save the result (`Palindromes.doWork(msg)`).
 
