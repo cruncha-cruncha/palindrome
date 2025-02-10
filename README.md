@@ -27,7 +27,7 @@ _Design Notes_
 
 - The `DeleteAllMessages` endpoint was not required, but was convenient during testing
 - `PUT` was chosen over `PATCH`, as the endpoint effectively replaces a message in it's entirety
-- Favour using a plural noun ('messages' not 'message'), especially if there's a "get all" endpoint
+- Plural nouns are favoured over singular ('messages' not 'message'), especially if there's a "get all" endpoint
 
 ### Request/Response Payloads
 
